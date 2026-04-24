@@ -608,6 +608,2864 @@ input:focus {
   .annotated-article {
     grid-template-columns: 1fr;
   }
+
+  .panel-summary {
+    position: sticky;
+    top: 0.75rem;
+    z-index: 5;
+  }
+}
+
+@media (max-width: 640px) {
+  .page-shell {
+    width: min(100%, calc(100% - 1rem));
+    padding: 1.25rem 0 2rem;
+  }
+
+  .panel {
+    padding: 1rem;
+    border-radius: 20px;
+  }
+
+  .panel-heading {
+    flex-direction: column;
+  }
+
+  .metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .panel-summary {
+    top: 0.5rem;
+    padding: 0.9rem;
+  }
+
+  .panel-summary .metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.7rem;
+  }
+
+  .panel-summary .metric-card {
+    padding: 0.85rem;
+  }
+
+  .panel-summary .metric-value {
+    font-size: clamp(1.45rem, 6vw, 2rem);
+  }
+
+  .panel-summary .summary-lead,
+  .panel-summary .advice-list,
+  .panel-summary .export-actions {
+    margin-top: 0.8rem;
+  }
+
+  .panel-summary .advice-chip {
+    padding: 0.6rem 0.7rem;
+  }
+
+  .editor-actions,
+  .search-actions,
+  .export-actions {
+    flex-direction: column;
+  }
+
+  .primary-button,
+  .secondary-button,
+  .ghost-button,
+  .action-link {
+    width: 100%;
+  }
+
+  .panel-summary .export-actions {
+    flex-direction: row;
+  }
+
+  .panel-summary .secondary-button,
+  .panel-summary .ghost-button {
+    flex: 1 1 calc(50% - 0.375rem);
+    width: auto;
+  }
+
+  textarea {
+    min-height: 280px;
+  }
+}
+
+</style>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <p class="eyebrow">Artikelanalyse</p>
+        <h1>Verbeter je tekst op feiten, mening en online controleerbaarheid</h1>
+        <p class="hero-copy">
+          Plak een artikel of haal een link binnen en krijg een redactioneel
+          rapport met prioritaire claims, subjectieve zinnen, bron-signalen en
+          live webmatches uit openbare internetbronnen.
+        </p>
+        <p class="hero-note">
+          Deze tool helpt bij redactionele beoordeling en snelle factcheck.
+          Webmatches geven vindbaarheid en context aan, maar bewijzen niet
+          automatisch dat een claim waar is.
+        </p>
+      </header>
+
+      <main class="layout">
+        <section class="panel panel-editor">
+          <div class="panel-heading">
+            <div>
+              <p class="section-label">Invoer</p>
+              <h2>Artikeltekst of link</h2>
+            </div>
+            <p class="panel-note">
+              Gebruik een directe artikel-link voor import of plak de tekst
+              handmatig voor de snelste analyse.
+            </p>
+          </div>
+
+          <div class="url-import">
+            <label class="sr-only" for="articleUrlInput">Artikel-URL</label>
+            <input
+              id="articleUrlInput"
+              type="url"
+              placeholder="Plak een artikel-link uit Google of een andere site..."
+            />
+            <button id="fetchUrlButton" class="secondary-button">
+              Analyseer link
+            </button>
+          </div>
+          <p class="url-import-note">
+            De tool probeert eerst slim te lezen vanaf de pagina zelf en valt
+            daarna terug op een reader-import als dat nodig is.
+          </p>
+
+          <label class="sr-only" for="articleInput">Artikeltekst</label>
+          <textarea
+            id="articleInput"
+            rows="16"
+            placeholder="Plak hier je artikel of concepttekst..."
+          ></textarea>
+
+          <div class="editor-actions">
+            <button id="analyzeButton" class="primary-button">
+              Analyseer artikel
+            </button>
+            <button id="exampleButton" class="ghost-button">
+              Demo-tekst
+            </button>
+            <button id="clearButton" class="ghost-button">Wis tekst</button>
+          </div>
+
+          <div class="search-actions">
+            <a
+              id="googleSearchLink"
+              class="secondary-button action-link is-disabled"
+              href="#"
+              target="_blank"
+              rel="noreferrer"
+              aria-disabled="true"
+            >
+              Zoek claim in Google
+            </a>
+            <a
+              id="duckSearchLink"
+              class="secondary-button action-link is-disabled"
+              href="#"
+              target="_blank"
+              rel="noreferrer"
+              aria-disabled="true"
+            >
+              Zoek claim in DuckDuckGo
+            </a>
+            <a
+              id="bingSearchLink"
+              class="secondary-button action-link is-disabled"
+              href="#"
+              target="_blank"
+              rel="noreferrer"
+              aria-disabled="true"
+            >
+              Zoek claim in Bing
+            </a>
+          </div>
+
+          <p id="searchHint" class="search-hint">
+            Plak tekst om zoekmachines klaar te zetten.
+          </p>
+        </section>
+
+        <section class="panel panel-summary">
+          <div class="panel-heading">
+            <div>
+              <p class="section-label">Overzicht</p>
+              <h2>Redactiekompas</h2>
+            </div>
+            <p id="statusMessage" class="status-message">
+              Plak eerst tekst om de analyse te starten.
+            </p>
+          </div>
+
+          <div id="metricGrid" class="metric-grid">
+            <article class="metric-card">
+              <p class="metric-label">Controleerbare claims</p>
+              <p class="metric-value">0%</p>
+            </article>
+            <article class="metric-card">
+              <p class="metric-label">Meningdichtheid</p>
+              <p class="metric-value">0%</p>
+            </article>
+            <article class="metric-card">
+              <p class="metric-label">Bron-signalen</p>
+              <p class="metric-value">0%</p>
+            </article>
+            <article class="metric-card">
+              <p class="metric-label">Live webmatch</p>
+              <p class="metric-value">-</p>
+            </article>
+          </div>
+
+          <div id="summaryLead" class="summary-lead empty-state">
+            Hier verschijnt een korte hoofdconclusie over de tekst.
+          </div>
+
+          <div id="reportHighlights" class="advice-list empty-state">
+            Analyse-highlights verschijnen hier.
+          </div>
+
+          <div class="export-actions">
+            <button id="copyReportButton" class="secondary-button" disabled>
+              Kopieer rapport
+            </button>
+            <button id="downloadReportButton" class="ghost-button" disabled>
+              Download rapport
+            </button>
+          </div>
+        </section>
+
+        <section class="panel panel-wide panel-report">
+          <div class="panel-heading">
+            <div>
+              <p class="section-label">Rapport</p>
+              <h2>Snelle redactie- en factchecksamenvatting</h2>
+            </div>
+            <p class="panel-note">
+              Dit blok is bedoeld om direct te delen met redacteuren of als
+              startpunt voor een diepere factcheck.
+            </p>
+          </div>
+          <div id="reportOutput" class="report-output empty-state">
+            Nog geen rapport beschikbaar.
+          </div>
+        </section>
+
+        <section class="panel panel-wide">
+          <div class="panel-heading">
+            <div>
+              <p class="section-label">Prioriteiten</p>
+              <h2>Check deze claims als eerste</h2>
+            </div>
+            <p class="panel-note">
+              Hier staan de meest concrete of meest risicovolle uitspraken voor
+              een snelle vervolgstap.
+            </p>
+          </div>
+          <div id="priorityList" class="priority-list empty-state">
+            Prioritaire claims verschijnen hier.
+          </div>
+        </section>
+
+        <section class="panel panel-wide">
+          <div class="panel-heading">
+            <div>
+              <p class="section-label">Gemarkeerd</p>
+              <h2>Artikel met labels</h2>
+            </div>
+          </div>
+          <div id="annotatedArticle" class="annotated-article empty-state">
+            Nog geen analyse beschikbaar.
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="section-label">Claims</p>
+              <h2>Waarschijnlijk controleerbaar</h2>
+            </div>
+          </div>
+          <div id="claimList" class="result-list empty-state">
+            Controleerbare zinnen verschijnen hier.
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="section-label">Mening</p>
+              <h2>Subjectieve zinnen</h2>
+            </div>
+          </div>
+          <div id="opinionList" class="result-list empty-state">
+            Meningrijke zinnen verschijnen hier.
+          </div>
+        </section>
+
+        <section class="panel panel-wide">
+          <div class="panel-heading">
+            <div>
+              <p class="section-label">Twijfelgevallen</p>
+              <h2>Claims met duiding gemengd</h2>
+            </div>
+            <p class="panel-note">
+              Dit zijn zinnen waarin feiten en interpretatie door elkaar lopen.
+            </p>
+          </div>
+          <div id="mixedList" class="result-list empty-state">
+            Gemengde zinnen verschijnen hier.
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script type="module">
+const articleInput = document.querySelector("#articleInput");
+const articleUrlInput = document.querySelector("#articleUrlInput");
+const analyzeButton = document.querySelector("#analyzeButton");
+const fetchUrlButton = document.querySelector("#fetchUrlButton");
+const exampleButton = document.querySelector("#exampleButton");
+const clearButton = document.querySelector("#clearButton");
+const googleSearchLink = document.querySelector("#googleSearchLink");
+const duckSearchLink = document.querySelector("#duckSearchLink");
+const bingSearchLink = document.querySelector("#bingSearchLink");
+const searchHint = document.querySelector("#searchHint");
+
+const metricGrid = document.querySelector("#metricGrid");
+const summaryLead = document.querySelector("#summaryLead");
+const reportHighlights = document.querySelector("#reportHighlights");
+const reportOutput = document.querySelector("#reportOutput");
+const priorityList = document.querySelector("#priorityList");
+const annotatedArticle = document.querySelector("#annotatedArticle");
+const claimList = document.querySelector("#claimList");
+const opinionList = document.querySelector("#opinionList");
+const mixedList = document.querySelector("#mixedList");
+const statusMessage = document.querySelector("#statusMessage");
+const copyReportButton = document.querySelector("#copyReportButton");
+const downloadReportButton = document.querySelector("#downloadReportButton");
+
+const opinionWords = new Set([
+  "absurd",
+  "afschuwelijk",
+  "alarmistisch",
+  "belachelijk",
+  "belangrijk",
+  "bijzonder",
+  "briljant",
+  "chaotisch",
+  "dramatisch",
+  "duidelijk",
+  "echt",
+  "eerlijk",
+  "ernstig",
+  "fantastisch",
+  "fijn",
+  "frappant",
+  "geweldig",
+  "goed",
+  "helaas",
+  "indrukwekkend",
+  "jammer",
+  "matig",
+  "mooi",
+  "onacceptabel",
+  "onbegrijpelijk",
+  "opmerkelijk",
+  "opvallend",
+  "pijnlijk",
+  "positief",
+  "prachtig",
+  "prima",
+  "problematisch",
+  "redelijk",
+  "schandalig",
+  "slecht",
+  "slim",
+  "spectaculair",
+  "sterk",
+  "teleurstellend",
+  "twijfelachtig",
+  "uitstekend",
+  "uniek",
+  "verrassend",
+  "waardevol",
+  "vreemd",
+  "zorgelijk",
+  "zwak",
+]);
+
+const opinionPhrases = [
+  "ik denk",
+  "ik vind",
+  "ik geloof",
+  "naar mijn mening",
+  "volgens mij",
+  "wat mij betreft",
+  "je kunt gerust zeggen",
+  "naar ons idee",
+  "dit bewijst volgens mij",
+  "het voelt alsof",
+  "het lijkt erop",
+  "naar mijn idee",
+  "zo voelt het",
+  "eerlijk gezegd",
+  "we mogen concluderen",
+];
+
+const hedgeWords = new Set([
+  "blijkbaar",
+  "circa",
+  "kennelijk",
+  "lijkt",
+  "mogelijk",
+  "misschien",
+  "ongeveer",
+  "ogenschijnlijk",
+  "soms",
+  "tamelijk",
+  "vermoedelijk",
+  "waarschijnlijk",
+]);
+
+const intensifierWords = new Set([
+  "bijzonder",
+  "erg",
+  "extreem",
+  "heel",
+  "nogal",
+  "ontzettend",
+  "totaal",
+  "uiterst",
+  "vreselijk",
+  "zeer",
+]);
+
+const firstPersonWords = new Set(["ik", "wij", "mijn", "onze", "ons"]);
+
+const sourceWords = new Set([
+  "analyse",
+  "archief",
+  "bron",
+  "brief",
+  "cijfers",
+  "commissie",
+  "data",
+  "document",
+  "gerechtshof",
+  "gemeente",
+  "inspectie",
+  "intern",
+  "kamer",
+  "meldde",
+  "meldt",
+  "ministerie",
+  "onderzoek",
+  "persbericht",
+  "politie",
+  "percentage",
+  "rapport",
+  "registratie",
+  "rechter",
+  "statistiek",
+  "verklaarde",
+  "verklaart",
+  "volgens",
+]);
+
+const attributionWords = new Set([
+  "aldus",
+  "bevestigde",
+  "bevestigt",
+  "meldde",
+  "meldt",
+  "schreef",
+  "schrijft",
+  "stelde",
+  "stelt",
+  "zei",
+  "zegt",
+]);
+
+const researchWords = new Set([
+  "analyse",
+  "onderzoek",
+  "rapport",
+  "statistiek",
+  "studie",
+  "wetenschappelijk",
+]);
+
+const monthWords = new Set([
+  "januari",
+  "februari",
+  "maart",
+  "april",
+  "mei",
+  "juni",
+  "juli",
+  "augustus",
+  "september",
+  "oktober",
+  "november",
+  "december",
+]);
+
+const stopWords = new Set([
+  "aan",
+  "als",
+  "bij",
+  "dan",
+  "dat",
+  "de",
+  "den",
+  "der",
+  "deze",
+  "die",
+  "dit",
+  "door",
+  "een",
+  "en",
+  "er",
+  "het",
+  "hun",
+  "in",
+  "is",
+  "maar",
+  "met",
+  "naar",
+  "nog",
+  "om",
+  "ons",
+  "onze",
+  "ook",
+  "op",
+  "te",
+  "tot",
+  "uit",
+  "van",
+  "veel",
+  "voor",
+  "volgens",
+  "wat",
+  "werd",
+  "worden",
+  "wordt",
+  "zal",
+  "ze",
+  "zijn",
+  "zo",
+]);
+
+const exampleArticle = `De gemeente Zwolle maakte op 18 april 2026 bekend dat het aantal meldingen over verkeershinder in de binnenstad met 14 procent is gestegen ten opzichte van 2025. Volgens een intern rapport werden vooral de Melkmarkt en de Katerdijk vaker genoemd. Dat is een zorgelijke ontwikkeling, want bewoners zijn het gedoe duidelijk zat. Wethouder Eva Jansen zei tijdens een persmoment dat de stad in juni extra handhaving inzet. Het lijkt bovendien logisch dat de werkzaamheden veel slechter zijn gecommuniceerd dan de gemeente nu beweert. RTV Oost meldde eerder dat ondernemers in maart al om snellere omleidingen vroegen. Dat bewijst volgens mij dat het stadsbestuur te laat in actie kwam.`;
+
+const stateStorageKey = "artikelchecker-state-v3";
+const importStrategies = ["direct", "reader"];
+
+let latestRunId = 0;
+let lastAnalysis = null;
+
+bindEvents();
+resetResults();
+
+if (restoreState()) {
+  runAnalysis();
+}
+
+function bindEvents() {
+  analyzeButton.addEventListener("click", () => {
+    runAnalysis();
+  });
+
+  articleInput.addEventListener("input", () => {
+    updateSearchActions({ text: articleInput.value.trim(), analysis: lastAnalysis });
+    persistState();
+  });
+
+  articleUrlInput.addEventListener("input", () => {
+    persistState();
+  });
+
+  articleUrlInput.addEventListener("keydown", async (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      await importArticleFromUrl();
+    }
+  });
+
+  exampleButton.addEventListener("click", () => {
+    articleUrlInput.value = "";
+    articleInput.value = exampleArticle;
+    persistState();
+    runAnalysis();
+  });
+
+  clearButton.addEventListener("click", () => {
+    articleUrlInput.value = "";
+    articleInput.value = "";
+    latestRunId += 1;
+    lastAnalysis = null;
+    persistState();
+    resetResults();
+  });
+
+  fetchUrlButton.addEventListener("click", async () => {
+    await importArticleFromUrl();
+  });
+
+  copyReportButton.addEventListener("click", async () => {
+    if (!lastAnalysis) {
+      return;
+    }
+
+    const reportText = buildReportText(lastAnalysis);
+    const copied = await copyTextToClipboard(reportText);
+    statusMessage.textContent = copied
+      ? "Rapport gekopieerd naar je klembord."
+      : "Kopieren lukte niet automatisch. Gebruik download als alternatief.";
+  });
+
+  downloadReportButton.addEventListener("click", () => {
+    if (!lastAnalysis) {
+      return;
+    }
+
+    const timestamp = new Date().toISOString().slice(0, 10);
+    const blob = new Blob([buildReportText(lastAnalysis)], {
+      type: "text/markdown;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `artikelchecker-rapport-${timestamp}.md`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+    statusMessage.textContent = "Rapport gedownload als markdownbestand.";
+  });
+
+  [googleSearchLink, duckSearchLink, bingSearchLink].forEach((link) => {
+    link.addEventListener("click", (event) => {
+      if (link.getAttribute("aria-disabled") === "true") {
+        event.preventDefault();
+      }
+    });
+  });
+}
+
+function resetResults() {
+  statusMessage.textContent = "Plak eerst tekst om de analyse te starten.";
+  metricGrid.innerHTML = getMetricCards([
+    ["Controleerbare claims", "0%"],
+    ["Meningdichtheid", "0%"],
+    ["Bron-signalen", "0%"],
+    ["Live webmatch", "-"],
+  ]);
+
+  summaryLead.className = "summary-lead empty-state";
+  summaryLead.textContent = "Hier verschijnt een korte hoofdconclusie over de tekst.";
+
+  reportHighlights.className = "advice-list empty-state";
+  reportHighlights.textContent = "Analyse-highlights verschijnen hier.";
+
+  reportOutput.className = "report-output empty-state";
+  reportOutput.textContent = "Nog geen rapport beschikbaar.";
+
+  priorityList.className = "priority-list empty-state";
+  priorityList.textContent = "Prioritaire claims verschijnen hier.";
+
+  annotatedArticle.className = "annotated-article empty-state";
+  annotatedArticle.textContent = "Nog geen analyse beschikbaar.";
+
+  claimList.className = "result-list empty-state";
+  claimList.textContent = "Controleerbare zinnen verschijnen hier.";
+
+  opinionList.className = "result-list empty-state";
+  opinionList.textContent = "Meningrijke zinnen verschijnen hier.";
+
+  mixedList.className = "result-list empty-state";
+  mixedList.textContent = "Gemengde zinnen verschijnen hier.";
+
+  updateSearchActions({ text: "" });
+  updateExportActions(false);
+}
+
+function updateExportActions(enabled) {
+  copyReportButton.disabled = !enabled;
+  downloadReportButton.disabled = !enabled;
+}
+
+async function runAnalysis() {
+  const text = articleInput.value.trim();
+
+  if (!text) {
+    lastAnalysis = null;
+    resetResults();
+    return;
+  }
+
+  const runId = ++latestRunId;
+  const analysis = analyzeText(text, articleUrlInput.value.trim());
+  lastAnalysis = analysis;
+
+  statusMessage.textContent =
+    "Tekst geanalyseerd. Live websignalen voor de belangrijkste claims worden opgehaald...";
+  renderAnalysis(analysis);
+  updateSearchActions({ text, analysis });
+  persistState();
+  updateExportActions(true);
+
+  const itemsForLookup = analysis.priorityItems
+    .filter((item) => item.category !== "opinion" && item.searchQuery)
+    .slice(0, 6);
+
+  if (!itemsForLookup.length) {
+    statusMessage.textContent =
+      "Analyse klaar. Voeg meer concrete claims toe voor sterkere online factchecksignalen.";
+    return;
+  }
+
+  itemsForLookup.forEach((item) => {
+    item.evidence = { status: "loading", score: 0, sources: [] };
+  });
+
+  renderAnalysis(analysis);
+
+  await attachLiveEvidence(itemsForLookup);
+
+  if (runId !== latestRunId) {
+    return;
+  }
+
+  refreshLiveMetrics(analysis);
+  lastAnalysis = analysis;
+  renderAnalysis(analysis);
+  updateSearchActions({ text, analysis });
+  persistState();
+  statusMessage.textContent =
+    "Analyse klaar. Gebruik de prioriteitenlijst voor je eerste factcheckronde en open zo nodig de zoeklinks.";
+}
+
+async function importArticleFromUrl() {
+  const rawUrl = articleUrlInput.value.trim();
+
+  if (!rawUrl) {
+    statusMessage.textContent = "Plak eerst een artikel-link om hem hier te analyseren.";
+    return;
+  }
+
+  const normalizedUrl = normalizeArticleUrl(rawUrl);
+
+  if (!normalizedUrl) {
+    statusMessage.textContent = "Deze link lijkt ongeldig. Gebruik een volledige http- of https-link.";
+    return;
+  }
+
+  const runId = ++latestRunId;
+  fetchUrlButton.disabled = true;
+  fetchUrlButton.textContent = "Bezig...";
+  statusMessage.textContent = "Artikeltekst wordt slim opgehaald en opgeschoond...";
+
+  try {
+    const importedText = await fetchExtractedArticleText(normalizedUrl);
+
+    if (runId !== latestRunId) {
+      return;
+    }
+
+    articleUrlInput.value = normalizedUrl;
+    articleInput.value = importedText;
+    persistState();
+    await runAnalysis();
+  } catch (error) {
+    if (runId !== latestRunId) {
+      return;
+    }
+
+    statusMessage.textContent =
+      "De link kon niet automatisch goed worden gelezen. Probeer een direct artikeladres of plak de tekst handmatig.";
+  } finally {
+    fetchUrlButton.disabled = false;
+    fetchUrlButton.textContent = "Analyseer link";
+  }
+}
+
+function analyzeText(text, articleUrl = "") {
+  const sentences = splitIntoSentences(text);
+  const items = sentences.map((sentence, index) => analyzeSentence(sentence, index));
+
+  const factItems = items.filter((item) => item.category === "fact");
+  const opinionItems = items.filter((item) => item.category === "opinion");
+  const mixedItems = items.filter((item) => item.category === "mixed");
+
+  const priorityItems = items
+    .filter((item) => item.category !== "opinion")
+    .sort((left, right) => right.priorityScore - left.priorityScore)
+    .slice(0, 6);
+
+  const metrics = buildMetrics(items);
+  const summary = buildSummary({ items, factItems, opinionItems, mixedItems, metrics });
+  const advice = buildAdvice({ metrics, factItems, opinionItems, mixedItems });
+
+  return {
+    articleUrl,
+    originalText: text,
+    items,
+    factItems,
+    opinionItems,
+    mixedItems,
+    priorityItems,
+    metrics,
+    summary,
+    advice,
+  };
+}
+
+function buildMetrics(items) {
+  const sentenceCount = items.length || 1;
+  const claimRatio = clamp(
+    Math.round(
+      items.reduce((total, item) => {
+        if (item.category === "fact") {
+          return total + 100;
+        }
+
+        if (item.category === "mixed") {
+          return total + 58;
+        }
+
+        return total + 12;
+      }, 0) / sentenceCount,
+    ),
+    0,
+    100,
+  );
+
+  const opinionRatio = clamp(
+    Math.round(items.reduce((total, item) => total + item.opinionIntensity, 0) / sentenceCount),
+    0,
+    100,
+  );
+
+  const sourceRatio = clamp(
+    Math.round(items.reduce((total, item) => total + item.sourceSignal, 0) / sentenceCount),
+    0,
+    100,
+  );
+
+  const liveMatchRatio = clamp(
+    Math.round(
+      items
+        .filter((item) => item.evidence && item.evidence.status !== "idle")
+        .reduce((total, item, index, array) => total + item.evidence.score / array.length, 0),
+    ),
+    0,
+    100,
+  );
+
+  return {
+    claimRatio,
+    opinionRatio,
+    sourceRatio,
+    liveMatchRatio,
+    sentenceCount,
+  };
+}
+
+function refreshLiveMetrics(analysis) {
+  analysis.metrics.liveMatchRatio = clamp(
+    Math.round(
+      analysis.priorityItems
+        .filter((item) => item.evidence && item.evidence.status !== "idle")
+        .reduce((total, item, index, array) => total + item.evidence.score / array.length, 0),
+    ),
+    0,
+    100,
+  );
+}
+
+function buildSummary({ items, factItems, opinionItems, mixedItems, metrics }) {
+  let title = "Gemengd stuk met factcheckwerk";
+  let lead =
+    "De tekst bevat zowel controleerbare claims als interpretatie. Werk eerst de concreetste en minst onderbouwde uitspraken af.";
+
+  if (metrics.claimRatio >= 68 && metrics.opinionRatio <= 36) {
+    title = "Overwegend feitelijk";
+    lead =
+      "De tekst oogt redelijk feitelijk, maar de belangrijkste winst zit in explicietere bronvermelding en controle van de hoofdclaims.";
+  } else if (metrics.opinionRatio >= 62 && metrics.claimRatio <= 48) {
+    title = "Duidelijk meningrijk";
+    lead =
+      "De tekst leunt sterk op duiding en oordeelwoorden. Maak feiten, interpretatie en commentaar scherper van elkaar los.";
+  }
+
+  const highlights = [
+    `${factItems.length} feitelijke zin${factItems.length === 1 ? "" : "nen"} met duidelijke verifieerbare signalen.`,
+    `${mixedItems.length} gemengde zin${mixedItems.length === 1 ? "" : "nen"} waar feit en interpretatie door elkaar lopen.`,
+    `${opinionItems.length} zin${opinionItems.length === 1 ? "" : "nen"} met nadrukkelijk subjectieve taal.`,
+  ];
+
+  if (metrics.sourceRatio < 42) {
+    highlights.push("Bron-signalen zijn zwak: voeg vaker rapporten, documenten, uitspraken of links toe.");
+  }
+
+  const priorityLead = items
+    .filter((item) => item.category !== "opinion")
+    .sort((left, right) => right.priorityScore - left.priorityScore)[0];
+
+  if (priorityLead) {
+    highlights.push(
+      `Hoofdclaim om eerst te checken: ${shortenText(priorityLead.sentence, 120)}`,
+    );
+  }
+
+  return { title, lead, highlights };
+}
+
+function buildAdvice({ metrics, factItems, opinionItems, mixedItems }) {
+  const advice = [];
+
+  if (!factItems.length) {
+    advice.push("Voeg cijfers, datums, namen of bronverwijzingen toe als je meer controleerbare claims wilt.");
+  }
+
+  if (metrics.sourceRatio < 40) {
+    advice.push("Veel zinnen missen bron-signalen. Benoem wie iets zegt, waar het staat en wanneer het is vastgesteld.");
+  }
+
+  if (mixedItems.length >= 2) {
+    advice.push("Splits feit en interpretatie vaker in aparte zinnen. Dat maakt redactie en factcheck veel sneller.");
+  }
+
+  if (metrics.opinionRatio >= 55) {
+    advice.push("Er zit relatief veel meningskleur in de tekst. Overweeg neutralere formuleringen voor nieuws- of achtergrondstukken.");
+  }
+
+  if (opinionItems.length && factItems.length) {
+    advice.push("Laat subjectieve uitspraken bij voorkeur als citaat of analyseframe terugkomen, niet als kale constatering.");
+  }
+
+  if (!advice.length) {
+    advice.push("De basis is sterk. Nu levert expliciete bronvermelding waarschijnlijk de meeste kwaliteitswinst op.");
+  }
+
+  return advice;
+}
+
+function analyzeSentence(sentence, index) {
+  const normalized = sentence.toLowerCase();
+  const tokens = tokenize(sentence);
+  const namedEntities = extractNamedEntities(sentence);
+
+  const opinionWordHits = countTokenHits(tokens, opinionWords);
+  const hedgeHits = countTokenHits(tokens, hedgeWords);
+  const intensifierHits = countTokenHits(tokens, intensifierWords);
+  const firstPersonHits = countTokenHits(tokens, firstPersonWords);
+  const opinionPhraseHits = countPhraseHits(normalized, opinionPhrases);
+
+  const sourceWordHits = countTokenHits(tokens, sourceWords);
+  const attributionHits = countTokenHits(tokens, attributionWords);
+  const researchHits = countTokenHits(tokens, researchWords);
+
+  const numberHits = countMatches(sentence, /\b\d+(?:[.,]\d+)?\b/g);
+  const yearHits = countMatches(sentence, /\b(?:19|20)\d{2}\b/g);
+  const dateHits = countMatches(
+    sentence,
+    /\b\d{1,2}\s(?:januari|februari|maart|april|mei|juni|juli|augustus|september|oktober|november|december)(?:\s(?:19|20)\d{2})?\b/gi,
+  );
+  const percentHits = countMatches(sentence, /\b\d+(?:[.,]\d+)?\s?(?:%|procent)\b/gi);
+  const currencyHits = countMatches(sentence, /\b(?:EUR|euro|dollar|miljoen|miljard)\b/gi);
+  const quoteHits = countMatches(sentence, /"[^"]+"|“[^”]+”/g);
+  const urlHits = countMatches(sentence, /https?:\/\/\S+/gi);
+  const exclamationHits = sentence.includes("!") ? 1 : 0;
+  const questionHits = sentence.includes("?") ? 1 : 0;
+
+  const factWeight =
+    numberHits * 18 +
+    percentHits * 12 +
+    currencyHits * 14 +
+    yearHits * 10 +
+    dateHits * 14 +
+    Math.min(namedEntities.length, 4) * 10 +
+    sourceWordHits * 9 +
+    attributionHits * 10 +
+    researchHits * 8 +
+    quoteHits * 8 +
+    urlHits * 18;
+
+  const opinionWeight =
+    opinionWordHits * 16 +
+    opinionPhraseHits * 18 +
+    intensifierHits * 8 +
+    hedgeHits * 7 +
+    firstPersonHits * 14 +
+    exclamationHits * 10 +
+    questionHits * 7;
+
+  const sourceSignal = clamp(
+    Math.round(
+      sourceWordHits * 14 +
+        attributionHits * 16 +
+        researchHits * 10 +
+        quoteHits * 10 +
+        urlHits * 26 +
+        Math.min(namedEntities.length, 4) * 8 +
+        (numberHits > 0 ? 10 : 0) +
+        (dateHits > 0 ? 8 : 0),
+    ),
+    0,
+    100,
+  );
+
+  const verifiabilityScore = clamp(
+    Math.round(12 + factWeight * 0.7 + sourceSignal * 0.25 - opinionWeight * 0.18),
+    0,
+    100,
+  );
+
+  const opinionIntensity = clamp(
+    Math.round(8 + opinionWeight * 0.9 - factWeight * 0.08),
+    0,
+    100,
+  );
+
+  const category = classifySentence({
+    verifiabilityScore,
+    opinionIntensity,
+    sourceSignal,
+    numberHits,
+    namedEntities,
+  });
+
+  const priorityScore = calculatePriority({
+    category,
+    verifiabilityScore,
+    sourceSignal,
+    numberHits,
+    dateHits,
+    namedEntities,
+    opinionIntensity,
+  });
+
+  return {
+    id: `sentence-${index}`,
+    sentence,
+    tokens,
+    namedEntities,
+    wordCount: tokens.length,
+    category,
+    factScore: factWeight,
+    opinionScore: opinionWeight,
+    verifiabilityScore,
+    opinionIntensity,
+    sourceSignal,
+    priorityScore,
+    confidence: calculateConfidence(verifiabilityScore, opinionIntensity),
+    searchQuery: buildSearchQuery(sentence),
+    reasons: buildReasons({
+      namedEntities,
+      numberHits,
+      yearHits,
+      dateHits,
+      percentHits,
+      sourceWordHits,
+      attributionHits,
+      quoteHits,
+      opinionWordHits,
+      opinionPhraseHits,
+      hedgeHits,
+      intensifierHits,
+      firstPersonHits,
+    }),
+    action: buildActionLabel({ category, sourceSignal, verifiabilityScore, opinionIntensity }),
+    evidence: {
+      status: "idle",
+      score: 0,
+      sources: [],
+    },
+  };
+}
+
+function splitIntoSentences(text) {
+  return (text.replace(/\s+/g, " ").match(/[^.!?]+[.!?]?/g) || [])
+    .map((sentence) => sentence.trim())
+    .filter((sentence) => sentence.length > 1);
+}
+
+function tokenize(text) {
+  return text
+    .toLowerCase()
+    .split(/[^\p{L}\p{N}%/-]+/u)
+    .map((token) => token.trim())
+    .filter(Boolean);
+}
+
+function countTokenHits(tokens, lexicon) {
+  return tokens.reduce((total, token) => total + (lexicon.has(token) ? 1 : 0), 0);
+}
+
+function countPhraseHits(text, phrases) {
+  return phrases.reduce((total, phrase) => total + (text.includes(phrase) ? 1 : 0), 0);
+}
+
+function countMatches(text, expression) {
+  return text.match(expression)?.length || 0;
+}
+
+function extractNamedEntities(sentence) {
+  const matches = sentence.match(/\b(?:[A-Z][\p{L}-]+(?:\s+[A-Z][\p{L}-]+)*)\b/gu) || [];
+
+  return matches.filter((match) => {
+    const normalized = match.toLowerCase();
+    return match.length > 2 && !stopWords.has(normalized) && !monthWords.has(normalized);
+  });
+}
+
+function classifySentence({
+  verifiabilityScore,
+  opinionIntensity,
+  sourceSignal,
+  numberHits,
+  namedEntities,
+}) {
+  if (verifiabilityScore >= 65 && opinionIntensity <= 35) {
+    return "fact";
+  }
+
+  if (opinionIntensity >= 60 && verifiabilityScore <= 45) {
+    return "opinion";
+  }
+
+  if (verifiabilityScore >= 45 && opinionIntensity >= 35) {
+    return "mixed";
+  }
+
+  if (sourceSignal >= 58 || numberHits > 0 || namedEntities.length >= 2) {
+    return verifiabilityScore >= opinionIntensity ? "fact" : "mixed";
+  }
+
+  if (opinionIntensity > verifiabilityScore) {
+    return "opinion";
+  }
+
+  return "mixed";
+}
+
+function calculatePriority({
+  category,
+  verifiabilityScore,
+  sourceSignal,
+  numberHits,
+  dateHits,
+  namedEntities,
+  opinionIntensity,
+}) {
+  if (category === "opinion") {
+    return clamp(Math.round(opinionIntensity * 0.65), 0, 100);
+  }
+
+  return clamp(
+    Math.round(
+      verifiabilityScore * 0.46 +
+        (100 - sourceSignal) * 0.28 +
+        (category === "mixed" ? 10 : 0) +
+        (numberHits > 0 ? 9 : 0) +
+        (dateHits > 0 ? 7 : 0) +
+        Math.min(namedEntities.length, 3) * 4,
+    ),
+    0,
+    100,
+  );
+}
+
+function calculateConfidence(verifiabilityScore, opinionIntensity) {
+  const spread = Math.abs(verifiabilityScore - opinionIntensity);
+  return clamp((0.54 + spread * 0.0046), 0.5, 0.97);
+}
+
+function buildReasons({
+  namedEntities,
+  numberHits,
+  yearHits,
+  dateHits,
+  percentHits,
+  sourceWordHits,
+  attributionHits,
+  quoteHits,
+  opinionWordHits,
+  opinionPhraseHits,
+  hedgeHits,
+  intensifierHits,
+  firstPersonHits,
+}) {
+  const reasons = [];
+
+  if (namedEntities.length) {
+    reasons.push(
+      `${namedEntities.length} eigenaam${namedEntities.length === 1 ? "" : "namen"} genoemd`,
+    );
+  }
+
+  if (numberHits) {
+    reasons.push(`${numberHits} cijfer${numberHits === 1 ? "" : "s"} in de zin`);
+  }
+
+  if (dateHits || yearHits) {
+    reasons.push("tijdsaanduiding aanwezig");
+  }
+
+  if (percentHits) {
+    reasons.push("percentage of verhouding genoemd");
+  }
+
+  if (sourceWordHits || attributionHits) {
+    reasons.push("verwijst naar bron of spreker");
+  }
+
+  if (quoteHits) {
+    reasons.push("citaat of directe uitspraak aanwezig");
+  }
+
+  if (opinionWordHits || opinionPhraseHits) {
+    reasons.push("bevat oordeeltaal");
+  }
+
+  if (hedgeHits) {
+    reasons.push("onzeker of afzwakkend taalgebruik");
+  }
+
+  if (intensifierHits) {
+    reasons.push("versterkende taal gebruikt");
+  }
+
+  if (firstPersonHits) {
+    reasons.push("ik- of wij-perspectief");
+  }
+
+  return reasons.slice(0, 5);
+}
+
+function buildActionLabel({ category, sourceSignal, verifiabilityScore, opinionIntensity }) {
+  if (category === "fact" && sourceSignal < 45) {
+    return "Zoek eerst de primaire bron of het originele document achter deze claim.";
+  }
+
+  if (category === "mixed") {
+    return "Splits feit en interpretatie en controleer daarna elk deel apart.";
+  }
+
+  if (category === "opinion" && opinionIntensity >= 60) {
+    return "Laat dit liever als citaat, analyse of commentaar terugkomen dan als neutrale constatering.";
+  }
+
+  if (verifiabilityScore >= 70) {
+    return "Geschikt om direct te factchecken via bron, archief of nieuwszoekactie.";
+  }
+
+  return "Voeg meer broncontext of feitelijke onderbouwing toe voordat je deze zin als claim gebruikt.";
+}
+
+function buildSearchQuery(sentence) {
+  const importantCaps = (sentence.match(/\b[A-Z][\p{L}-]+\b/gu) || []).filter((term) => {
+    const normalized = term.toLowerCase();
+    return !stopWords.has(normalized) && !monthWords.has(normalized);
+  });
+
+  const importantNumbers = sentence.match(/\b\d+(?:[.,]\d+)?(?:\s?(?:%|procent|miljoen|miljard))?\b/gi) || [];
+
+  const keywords = tokenize(sentence)
+    .filter((token) => !stopWords.has(token))
+    .filter((token) => !monthWords.has(token))
+    .filter((token) => !opinionWords.has(token))
+    .filter((token) => !hedgeWords.has(token))
+    .filter((token) => token.length > 2)
+    .slice(0, 7);
+
+  const terms = [...importantCaps, ...importantNumbers, ...keywords];
+  const uniqueTerms = [];
+  const seen = new Set();
+
+  for (const term of terms) {
+    const normalized = term.toLowerCase();
+
+    if (seen.has(normalized)) {
+      continue;
+    }
+
+    seen.add(normalized);
+    uniqueTerms.push(term.includes(" ") ? `"${term}"` : term);
+  }
+
+  return uniqueTerms.slice(0, 9).join(" ");
+}
+
+function renderAnalysis(analysis) {
+  metricGrid.innerHTML = getMetricCards([
+    ["Controleerbare claims", `${analysis.metrics.claimRatio}%`],
+    ["Meningdichtheid", `${analysis.metrics.opinionRatio}%`],
+    ["Bron-signalen", `${analysis.metrics.sourceRatio}%`],
+    ["Live webmatch", getLiveMatchMetricValue(analysis)],
+  ]);
+
+  summaryLead.className = "summary-lead";
+  summaryLead.innerHTML = `
+    <strong>${escapeHtml(analysis.summary.title)}</strong><br />
+    ${escapeHtml(analysis.summary.lead)}
+  `;
+
+  reportHighlights.className = "advice-list";
+  reportHighlights.innerHTML = analysis.summary.highlights
+    .concat(analysis.advice)
+    .map((item) => `<div class="advice-chip">${escapeHtml(item)}</div>`)
+    .join("");
+
+  reportOutput.className = "report-output";
+  reportOutput.innerHTML = buildReportCards(analysis);
+
+  renderPriorityList(analysis.priorityItems);
+
+  annotatedArticle.className = "annotated-article";
+  annotatedArticle.innerHTML = analysis.items
+    .map(
+      (item) => `
+        <article class="sentence-pill sentence-pill--${item.category}">
+          <span class="tag tag--${item.category}">${getCategoryLabel(item.category)}</span>
+          <span>${escapeHtml(item.sentence)}</span>
+          <div class="result-meta">
+            <span class="tag">Controleerbaar ${item.verifiabilityScore}%</span>
+            <span class="tag">Mening ${item.opinionIntensity}%</span>
+            <span class="tag">Bron ${item.sourceSignal}%</span>
+          </div>
+        </article>
+      `,
+    )
+    .join("");
+
+  renderResultList(
+    claimList,
+    analysis.factItems,
+    "Geen duidelijke controleerbare zinnen gevonden.",
+  );
+
+  renderResultList(
+    opinionList,
+    analysis.opinionItems,
+    "Geen sterk subjectieve zinnen gevonden.",
+  );
+
+  renderResultList(
+    mixedList,
+    analysis.mixedItems,
+    "Geen gemengde zinnen gevonden.",
+  );
+}
+
+function getLiveMatchMetricValue(analysis) {
+  const statuses = analysis.priorityItems.map((item) => item.evidence.status);
+
+  if (!statuses.length || statuses.every((status) => status === "idle")) {
+    return "-";
+  }
+
+  if (statuses.some((status) => status === "loading")) {
+    return "Bezig";
+  }
+
+  return `${analysis.metrics.liveMatchRatio}%`;
+}
+
+function buildReportCards(analysis) {
+  const weaklySourced = analysis.priorityItems
+    .filter((item) => item.sourceSignal < 45)
+    .slice(0, 3);
+  const strongestOpinion = analysis.opinionItems
+    .slice()
+    .sort((left, right) => right.opinionIntensity - left.opinionIntensity)
+    .slice(0, 3);
+
+  const reportSections = [
+    {
+      title: "Hoofdbeeld",
+      content: analysis.summary.lead,
+      list: [
+        `Controleerbare claims: ${analysis.metrics.claimRatio}%`,
+        `Meningdichtheid: ${analysis.metrics.opinionRatio}%`,
+        `Bron-signalen: ${analysis.metrics.sourceRatio}%`,
+        `Live webmatch: ${analysis.metrics.liveMatchRatio || 0}%`,
+      ],
+    },
+    {
+      title: "Eerst factchecken",
+      content:
+        "Dit zijn de claims met de hoogste combinatie van concreetheid, risico en beperkte onderbouwing.",
+      list: analysis.priorityItems.slice(0, 4).map((item) => shortenText(item.sentence, 120)),
+    },
+    {
+      title: "Onderbouwing verbeteren",
+      content:
+        "Claims worden sterker wanneer de bron, datum en actor expliciet in dezelfde zin zichtbaar zijn.",
+      list: weaklySourced.length
+        ? weaklySourced.map((item) => `${shortenText(item.sentence, 110)} (${item.sourceSignal}% bron-signaal)`)
+        : ["De belangrijkste claims hebben al redelijke bron-signalen."],
+    },
+    {
+      title: "Mening en toon",
+      content:
+        "Gebruik deze uitspraken als citaat of analyseframe wanneer je een neutralere redactiestijl wilt aanhouden.",
+      list: strongestOpinion.length
+        ? strongestOpinion.map((item) => shortenText(item.sentence, 110))
+        : ["Er springen geen zwaar subjectieve zinnen uit."],
+    },
+  ];
+
+  return reportSections
+    .map(
+      (section) => `
+        <article class="report-card">
+          <h3>${escapeHtml(section.title)}</h3>
+          <p>${escapeHtml(section.content)}</p>
+          <ul>
+            ${section.list.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
+          </ul>
+        </article>
+      `,
+    )
+    .join("");
+}
+
+function renderPriorityList(items) {
+  if (!items.length) {
+    priorityList.className = "priority-list empty-state";
+    priorityList.textContent = "Prioritaire claims verschijnen hier.";
+    return;
+  }
+
+  priorityList.className = "priority-list";
+  priorityList.innerHTML = items
+    .map(
+      (item) => `
+        <article class="priority-card priority-card--${item.category}">
+          <div class="priority-topline">
+            <span class="tag tag--${item.category}">${getCategoryLabel(item.category)}</span>
+            <span class="priority-score">Prioriteit ${item.priorityScore}</span>
+          </div>
+          <p class="priority-text">${escapeHtml(item.sentence)}</p>
+          <div class="priority-meta">
+            <span class="tag">Controleerbaar ${item.verifiabilityScore}%</span>
+            <span class="tag">Bron ${item.sourceSignal}%</span>
+            <span class="tag">Mening ${item.opinionIntensity}%</span>
+          </div>
+          <div class="reason-list">
+            ${item.reasons.map((reason) => `<span class="tag reason-chip">${escapeHtml(reason)}</span>`).join("")}
+          </div>
+          <p class="result-note">${escapeHtml(item.action)}</p>
+          ${renderEvidencePanel(item)}
+          ${
+            item.searchQuery
+              ? `
+                <div class="search-links">
+                  <a href="${buildSearchUrl(item.searchQuery)}" target="_blank" rel="noreferrer">Zoek op web</a>
+                  <a href="${buildNewsSearchUrl(item.searchQuery)}" target="_blank" rel="noreferrer">Zoek in nieuws</a>
+                </div>
+              `
+              : ""
+          }
+        </article>
+      `,
+    )
+    .join("");
+}
+
+function renderEvidencePanel(item) {
+  if (!item.evidence || item.evidence.status === "idle") {
+    return `
+      <div class="evidence-panel">
+        <p class="evidence-heading">Live websignalen</p>
+        <p class="result-note">Nog niet opgehaald.</p>
+      </div>
+    `;
+  }
+
+  if (item.evidence.status === "loading") {
+    return `
+      <div class="evidence-panel">
+        <p class="evidence-heading">Live websignalen</p>
+        <p class="result-note">Signalen uit openbare bronnen worden geladen...</p>
+      </div>
+    `;
+  }
+
+  if (item.evidence.status === "no-match") {
+    return `
+      <div class="evidence-panel">
+        <p class="evidence-heading">Live websignalen</p>
+        <p class="result-note">Nog geen duidelijke openbare match gevonden. Gebruik zoekopdrachten en primaire bronnen.</p>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="evidence-panel">
+      <p class="evidence-heading">Live websignalen ${item.evidence.score}%</p>
+      <div class="evidence-list">
+        ${item.evidence.sources
+          .map(
+            (source) => `
+              <div class="evidence-item">
+                <a href="${escapeAttribute(source.url)}" target="_blank" rel="noreferrer">
+                  ${escapeHtml(source.source)}: ${escapeHtml(source.label)}
+                </a>
+                <span>${escapeHtml(source.detail)}</span>
+              </div>
+            `,
+          )
+          .join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderResultList(container, items, emptyLabel) {
+  if (!items.length) {
+    container.className = "result-list empty-state";
+    container.textContent = emptyLabel;
+    return;
+  }
+
+  container.className = "result-list";
+  container.innerHTML = items
+    .map(
+      (item) => `
+        <article class="result-card ${item.category}-card">
+          <p class="result-text">${escapeHtml(item.sentence)}</p>
+          <div class="result-meta">
+            <span class="tag tag--${item.category}">${getCategoryLabel(item.category)}</span>
+            <span class="tag">Zekerheid ${Math.round(item.confidence * 100)}%</span>
+            <span class="tag">Controleerbaar ${item.verifiabilityScore}%</span>
+            <span class="tag">Bron ${item.sourceSignal}%</span>
+          </div>
+          <p class="result-note">${escapeHtml(item.action)}</p>
+          <div class="reason-list">
+            ${item.reasons.map((reason) => `<span class="tag reason-chip">${escapeHtml(reason)}</span>`).join("")}
+          </div>
+          ${
+            item.searchQuery
+              ? `
+                <div class="search-links">
+                  <a href="${buildSearchUrl(item.searchQuery)}" target="_blank" rel="noreferrer">Zoek op web</a>
+                  <a href="${buildNewsSearchUrl(item.searchQuery)}" target="_blank" rel="noreferrer">Zoek in nieuws</a>
+                </div>
+              `
+              : ""
+          }
+        </article>
+      `,
+    )
+    .join("");
+}
+
+function getCategoryLabel(category) {
+  if (category === "fact") {
+    return "Feitelijk";
+  }
+
+  if (category === "opinion") {
+    return "Mening";
+  }
+
+  return "Gemengd";
+}
+
+function getMetricCards(cards) {
+  return cards
+    .map(
+      ([label, value]) => `
+        <article class="metric-card">
+          <p class="metric-label">${escapeHtml(label)}</p>
+          <p class="metric-value">${escapeHtml(value)}</p>
+        </article>
+      `,
+    )
+    .join("");
+}
+
+async function attachLiveEvidence(items) {
+  await Promise.all(
+    items.map(async (item) => {
+      try {
+        const evidenceQueries = buildEvidenceQueries(item);
+        const [wikipediaSources, wikidataSources, duckSources] = await Promise.all([
+          fetchEvidenceAcrossQueries(evidenceQueries, fetchWikipediaEvidence),
+          fetchEvidenceAcrossQueries(evidenceQueries, fetchWikidataEvidence),
+          fetchEvidenceAcrossQueries(evidenceQueries, fetchDuckDuckGoEvidence),
+        ]);
+
+        const sources = dedupeEvidenceSources([
+          ...wikipediaSources,
+          ...wikidataSources,
+          ...duckSources,
+        ]).slice(0, 5);
+
+        item.evidence = sources.length
+          ? {
+              status: "match",
+              score: computeEvidenceScore(sources),
+              sources,
+            }
+          : { status: "no-match", score: 0, sources: [] };
+      } catch (error) {
+        item.evidence = { status: "no-match", score: 0, sources: [] };
+      }
+    }),
+  );
+}
+
+async function fetchEvidenceAcrossQueries(queries, fetcher) {
+  for (const query of queries) {
+    const results = await fetcher(query);
+
+    if (results.length) {
+      return results;
+    }
+  }
+
+  return [];
+}
+
+function buildEvidenceQueries(item) {
+  const entityTerms = item.namedEntities.slice(0, 2);
+  const keywordTerms = item.tokens
+    .filter((token) => !stopWords.has(token))
+    .filter((token) => !opinionWords.has(token))
+    .filter((token) => !hedgeWords.has(token))
+    .filter((token) => token.length > 3)
+    .filter((token) => !/^\d/.test(token))
+    .slice(0, 5);
+
+  const focusedQuery = [...entityTerms, ...keywordTerms].join(" ").trim();
+  const entityQuery = entityTerms.join(" ").trim();
+  const keywordQuery = keywordTerms.slice(0, 3).join(" ").trim();
+
+  return [focusedQuery, entityQuery, keywordQuery, item.searchQuery]
+    .filter(Boolean)
+    .filter(onlyUnique);
+}
+
+async function fetchWikipediaEvidence(query) {
+  if (!query) {
+    return [];
+  }
+
+  const languages = ["nl", "en"];
+
+  for (const language of languages) {
+    try {
+      const url = `https://${language}.wikipedia.org/w/api.php?action=opensearch&origin=*&limit=3&search=${encodeURIComponent(query)}`;
+      const response = await fetchJsonWithTimeout(url);
+      const titles = Array.isArray(response?.[1]) ? response[1] : [];
+      const descriptions = Array.isArray(response?.[2]) ? response[2] : [];
+      const links = Array.isArray(response?.[3]) ? response[3] : [];
+
+      if (titles.length) {
+        return titles.slice(0, 3).map((title, index) => ({
+          source: "Wikipedia",
+          label: title,
+          detail: descriptions[index] || "Encyclopedische match gevonden",
+          url: links[index] || `https://${language}.wikipedia.org/wiki/${encodeURIComponent(title.replaceAll(" ", "_"))}`,
+        }));
+      }
+    } catch (error) {
+      continue;
+    }
+  }
+
+  return [];
+}
+
+async function fetchWikidataEvidence(query) {
+  if (!query) {
+    return [];
+  }
+
+  const url = `https://www.wikidata.org/w/api.php?action=wbsearchentities&format=json&language=nl&uselang=nl&limit=3&origin=*&search=${encodeURIComponent(query)}`;
+  const response = await fetchJsonWithTimeout(url);
+  const matches = Array.isArray(response?.search) ? response.search : [];
+
+  return matches.slice(0, 3).map((match) => ({
+    source: "Wikidata",
+    label: match.label || match.id || "Entity-match",
+    detail: match.description || "Structuurmatch in open kennisbank",
+    url: match.concepturi || `https://www.wikidata.org/wiki/${match.id}`,
+  }));
+}
+
+async function fetchDuckDuckGoEvidence(query) {
+  if (!query) {
+    return [];
+  }
+
+  const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1&no_redirect=1`;
+  const response = await fetchJsonWithTimeout(url);
+  const sources = [];
+
+  if (response?.AbstractURL && response?.Heading) {
+    sources.push({
+      source: "DuckDuckGo",
+      label: response.Heading,
+      detail: response.AbstractText || "Instant answer gevonden",
+      url: response.AbstractURL,
+    });
+  }
+
+  const relatedTopics = flattenRelatedTopics(response?.RelatedTopics || []).slice(0, 2);
+
+  for (const topic of relatedTopics) {
+    if (!topic.Text || !topic.FirstURL) {
+      continue;
+    }
+
+    sources.push({
+      source: "DuckDuckGo",
+      label: topic.Text.split(" - ")[0] || "Gerelateerde match",
+      detail: topic.Text,
+      url: topic.FirstURL,
+    });
+  }
+
+  return sources;
+}
+
+function flattenRelatedTopics(topics) {
+  return topics.flatMap((topic) => {
+    if (Array.isArray(topic?.Topics)) {
+      return flattenRelatedTopics(topic.Topics);
+    }
+
+    return topic ? [topic] : [];
+  });
+}
+
+function dedupeEvidenceSources(sources) {
+  const deduped = [];
+  const seen = new Set();
+
+  for (const source of sources) {
+    if (!source?.label || !source?.url) {
+      continue;
+    }
+
+    const key = `${source.source}:${source.label}:${source.url}`;
+
+    if (seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    deduped.push(source);
+  }
+
+  return deduped;
+}
+
+function computeEvidenceScore(sources) {
+  const weightBySource = {
+    Wikipedia: 28,
+    Wikidata: 22,
+    DuckDuckGo: 18,
+  };
+
+  return clamp(
+    sources.reduce((total, source) => total + (weightBySource[source.source] || 14), 0) +
+      (sources.length >= 2 ? 12 : 0),
+    0,
+    100,
+  );
+}
+
+async function fetchExtractedArticleText(sourceUrl) {
+  let bestText = "";
+
+  for (const strategy of importStrategies) {
+    try {
+      let candidateText = "";
+
+      if (strategy === "direct") {
+        candidateText = await tryDirectArticleFetch(sourceUrl);
+      } else {
+        candidateText = await tryReaderImport(sourceUrl);
+      }
+
+      if (scoreImportedText(candidateText) > scoreImportedText(bestText)) {
+        bestText = candidateText;
+      }
+
+      if (scoreImportedText(bestText) >= 520) {
+        break;
+      }
+    } catch (error) {
+      continue;
+    }
+  }
+
+  if (scoreImportedText(bestText) < 220) {
+    throw new Error("import_failed");
+  }
+
+  return bestText.slice(0, 22000);
+}
+
+async function tryDirectArticleFetch(sourceUrl) {
+  const response = await fetchWithTimeout(sourceUrl, {
+    headers: {
+      Accept: "text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.8",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("direct_fetch_failed");
+  }
+
+  const contentType = response.headers.get("content-type") || "";
+  const raw = await response.text();
+
+  if (contentType.includes("text/html")) {
+    const extracted = extractTextFromHtml(raw, sourceUrl);
+
+    if (scoreImportedText(extracted) >= 220) {
+      return extracted;
+    }
+  }
+
+  const cleaned = cleanImportedArticleText(raw);
+
+  if (scoreImportedText(cleaned) < 220) {
+    throw new Error("direct_text_too_short");
+  }
+
+  return cleaned;
+}
+
+async function tryReaderImport(sourceUrl) {
+  const readerCandidates = buildReaderCandidates(sourceUrl);
+  let bestText = "";
+
+  for (const readerUrl of readerCandidates) {
+    try {
+      const response = await fetchWithTimeout(readerUrl);
+
+      if (!response.ok) {
+        continue;
+      }
+
+      const rawText = await response.text();
+      const cleanedText = cleanImportedArticleText(rawText);
+
+      if (scoreImportedText(cleanedText) > scoreImportedText(bestText)) {
+        bestText = cleanedText;
+      }
+    } catch (error) {
+      continue;
+    }
+  }
+
+  if (scoreImportedText(bestText) < 220) {
+    throw new Error("reader_import_failed");
+  }
+
+  return bestText;
+}
+
+function buildReaderCandidates(sourceUrl) {
+  const withoutProtocol = sourceUrl.replace(/^https?:\/\//i, "");
+  const protocol = sourceUrl.startsWith("https://") ? "https" : "http";
+
+  return [
+    `https://r.jina.ai/http://${withoutProtocol}`,
+    `https://r.jina.ai/http://${protocol}://${withoutProtocol}`,
+  ].filter(onlyUnique);
+}
+
+function extractTextFromHtml(html, sourceUrl) {
+  const parser = new DOMParser();
+  const documentNode = parser.parseFromString(html, "text/html");
+
+  documentNode
+    .querySelectorAll("script, style, noscript, svg, form, nav, footer, header, aside, iframe")
+    .forEach((node) => node.remove());
+
+  const title =
+    documentNode.querySelector('meta[property="og:title"]')?.getAttribute("content") ||
+    documentNode.querySelector('meta[name="twitter:title"]')?.getAttribute("content") ||
+    documentNode.title ||
+    "";
+
+  const description =
+    documentNode.querySelector('meta[name="description"]')?.getAttribute("content") ||
+    documentNode.querySelector('meta[property="og:description"]')?.getAttribute("content") ||
+    "";
+
+  const candidateTexts = [];
+  const selectorCandidates = [
+    "article",
+    "[itemprop='articleBody']",
+    ".article-body",
+    ".article__body",
+    ".entry-content",
+    ".post-content",
+    ".story-body",
+    "main",
+  ];
+
+  for (const selector of selectorCandidates) {
+    documentNode.querySelectorAll(selector).forEach((element) => {
+      const candidate = collectArticleTextFromNode(element);
+      if (candidate) {
+        candidateTexts.push(candidate);
+      }
+    });
+  }
+
+  if (!candidateTexts.length && documentNode.body) {
+    candidateTexts.push(collectArticleTextFromNode(documentNode.body));
+  }
+
+  const bestCandidate = candidateTexts
+    .filter(Boolean)
+    .sort((left, right) => scoreImportedText(right) - scoreImportedText(left))[0];
+
+  const combined = [title, description, bestCandidate]
+    .filter(Boolean)
+    .join("\n\n");
+
+  return cleanImportedArticleText(combined || documentNode.body?.textContent || sourceUrl);
+}
+
+function collectArticleTextFromNode(node) {
+  const paragraphTexts = Array.from(node.querySelectorAll("p, h2, h3, li"))
+    .map((element) => element.textContent || "")
+    .map((text) => cleanImportedArticleText(text))
+    .filter((text) => text.length >= 55)
+    .slice(0, 80);
+
+  if (paragraphTexts.length >= 4) {
+    return paragraphTexts.join("\n\n");
+  }
+
+  return cleanImportedArticleText(node.textContent || "");
+}
+
+function cleanImportedArticleText(rawText) {
+  const withoutHeaders = rawText
+    .replace(/^Title:\s.*$/gim, "")
+    .replace(/^URL Source:\s.*$/gim, "")
+    .replace(/^Published Time:\s.*$/gim, "")
+    .replace(/^Warning:\s.*$/gim, "")
+    .replace(/^Markdown Content:\s*$/gim, "");
+
+  const flattened = withoutHeaders
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/^\s*[-*]\s+/gm, "")
+    .replace(/\r/g, "");
+
+  const lines = flattened
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .filter((line) => !shouldDropImportedLine(line));
+
+  return lines
+    .join("\n\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
+}
+
+function shouldDropImportedLine(line) {
+  const normalized = line.toLowerCase();
+  const junkFragments = [
+    "accepteer",
+    "advertentie",
+    "cookie",
+    "klik hier",
+    "lees ook",
+    "nieuwsbrief",
+    "share",
+    "volg ons",
+    "abonneer",
+    "registreren",
+    "inloggen",
+    "meld je aan",
+    "copyright",
+  ];
+
+  if (junkFragments.some((fragment) => normalized.includes(fragment))) {
+    return true;
+  }
+
+  if (line.length < 35 && !/[.!?]$/.test(line)) {
+    return true;
+  }
+
+  return false;
+}
+
+function scoreImportedText(text) {
+  if (!text) {
+    return 0;
+  }
+
+  const sentenceCount = splitIntoSentences(text).length;
+  return text.length + sentenceCount * 60;
+}
+
+function normalizeArticleUrl(value) {
+  const input = value.trim();
+  const withProtocol = /^https?:\/\//i.test(input) ? input : `https://${input}`;
+
+  try {
+    const url = new URL(withProtocol);
+
+    if (!["http:", "https:"].includes(url.protocol)) {
+      return null;
+    }
+
+    return url.toString();
+  } catch (error) {
+    return null;
+  }
+}
+
+function persistState() {
+  const state = {
+    text: articleInput.value,
+    articleUrl: articleUrlInput.value,
+  };
+
+  try {
+    localStorage.setItem(stateStorageKey, JSON.stringify(state));
+  } catch (error) {
+    return;
+  }
+}
+
+function restoreState() {
+  try {
+    const rawState = localStorage.getItem(stateStorageKey);
+
+    if (!rawState) {
+      return false;
+    }
+
+    const parsedState = JSON.parse(rawState);
+
+    if (typeof parsedState?.articleUrl === "string") {
+      articleUrlInput.value = parsedState.articleUrl;
+    }
+
+    if (typeof parsedState?.text === "string" && parsedState.text.trim()) {
+      articleInput.value = parsedState.text;
+      return true;
+    }
+  } catch (error) {
+    return false;
+  }
+
+  return false;
+}
+
+function getQuickSearchQuery(text, analysis) {
+  if (!text) {
+    return "";
+  }
+
+  const bestItem = analysis?.priorityItems?.find((item) => item.searchQuery);
+
+  if (bestItem?.searchQuery) {
+    return bestItem.searchQuery;
+  }
+
+  return buildSearchQuery(splitIntoSentences(text).slice(0, 2).join(" "));
+}
+
+function updateSearchActions({ text, analysis = null }) {
+  const query = getQuickSearchQuery(text, analysis);
+
+  if (!query) {
+    setSearchLinkState(googleSearchLink, "", false);
+    setSearchLinkState(duckSearchLink, "", false);
+    setSearchLinkState(bingSearchLink, "", false);
+    searchHint.textContent = "Plak tekst om zoekmachines klaar te zetten.";
+    return;
+  }
+
+  setSearchLinkState(googleSearchLink, buildSearchUrl(query), true);
+  setSearchLinkState(duckSearchLink, buildDuckSearchUrl(query), true);
+  setSearchLinkState(bingSearchLink, buildBingSearchUrl(query), true);
+  searchHint.textContent = analysis
+    ? "Zoekmachines openen nu de hoogste factcheckprioriteit uit je analyse."
+    : "Zoekmachines zijn klaar. Analyseer de tekst voor een scherpere prioriteit.";
+}
+
+function setSearchLinkState(link, href, enabled) {
+  link.href = enabled ? href : "#";
+  link.setAttribute("aria-disabled", enabled ? "false" : "true");
+  link.classList.toggle("is-disabled", !enabled);
+}
+
+function buildReportText(analysis) {
+  const lines = [
+    "# Artikelchecker rapport",
+    "",
+    `Datum: ${new Date().toLocaleString("nl-NL")}`,
+    analysis.articleUrl ? `Artikel-URL: ${analysis.articleUrl}` : "Artikel-URL: niet opgegeven",
+    "",
+    "## Hoofdconclusie",
+    `${analysis.summary.title}: ${analysis.summary.lead}`,
+    "",
+    "## Kerncijfers",
+    `- Controleerbare claims: ${analysis.metrics.claimRatio}%`,
+    `- Meningdichtheid: ${analysis.metrics.opinionRatio}%`,
+    `- Bron-signalen: ${analysis.metrics.sourceRatio}%`,
+    `- Live webmatch: ${analysis.metrics.liveMatchRatio || 0}%`,
+    "",
+    "## Eerst factchecken",
+    ...analysis.priorityItems.slice(0, 5).flatMap((item, index) => {
+      const evidenceText =
+        item.evidence.status === "match"
+          ? item.evidence.sources
+              .map((source) => `${source.source}: ${source.label}`)
+              .join("; ")
+          : "Nog geen duidelijke live webmatch.";
+
+      return [
+        `${index + 1}. ${item.sentence}`,
+        `   - Prioriteit: ${item.priorityScore}%`,
+        `   - Controleerbaar: ${item.verifiabilityScore}%`,
+        `   - Bron-signaal: ${item.sourceSignal}%`,
+        `   - Actie: ${item.action}`,
+        `   - Websignalen: ${evidenceText}`,
+      ];
+    }),
+    "",
+    "## Subjectieve zinnen",
+    ...(analysis.opinionItems.length
+      ? analysis.opinionItems.slice(0, 5).map((item, index) => `${index + 1}. ${item.sentence}`)
+      : ["1. Geen uitgesproken subjectieve zinnen gevonden."]),
+    "",
+    "## Redactionele tips",
+    ...analysis.advice.map((tip) => `- ${tip}`),
+  ];
+
+  return lines.join("\n");
+}
+
+function buildSearchUrl(query) {
+  return `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+}
+
+function buildDuckSearchUrl(query) {
+  return `https://duckduckgo.com/?q=${encodeURIComponent(query)}`;
+}
+
+function buildBingSearchUrl(query) {
+  return `https://www.bing.com/search?q=${encodeURIComponent(query)}`;
+}
+
+function buildNewsSearchUrl(query) {
+  return `https://news.google.com/search?q=${encodeURIComponent(query)}`;
+}
+
+async function copyTextToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (error) {
+    const helper = document.createElement("textarea");
+    helper.value = text;
+    helper.setAttribute("readonly", "");
+    helper.style.position = "absolute";
+    helper.style.left = "-9999px";
+    document.body.append(helper);
+    helper.select();
+    const copied = document.execCommand("copy");
+    helper.remove();
+    return copied;
+  }
+}
+
+async function fetchJsonWithTimeout(url, options = {}) {
+  const response = await fetchWithTimeout(url, options);
+
+  if (!response.ok) {
+    throw new Error("request_failed");
+  }
+
+  return response.json();
+}
+
+async function fetchWithTimeout(url, options = {}) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 7000);
+
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function shortenText(text, maxLength) {
+  if (text.length <= maxLength) {
+    return text;
+  }
+
+  return `${text.slice(0, maxLength - 1).trim()}...`;
+}
+
+function onlyUnique(value, index, array) {
+  return array.indexOf(value) === index;
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function escapeAttribute(value) {
+  return escapeHtml(String(value));
+}
+
+</script>
+  </body>
+</html>
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Artikelchecker | Feiten, Mening en Websignalen</title>
+    <meta
+      name="description"
+      content="Analyseer artikelen op controleerbare claims, meningdichtheid, bronsignalen en live webmatches om sneller te factchecken."
+    />
+    <meta name="robots" content="index,follow" />
+    <meta name="theme-color" content="#f5efe4" />
+    <meta
+      property="og:title"
+      content="Artikelchecker | Feiten, Mening en Websignalen"
+    />
+    <meta
+      property="og:description"
+      content="Plak een artikel of link en krijg een duidelijk rapport met factcheckprioriteiten, meningdichtheid en live websignalen."
+    />
+    <meta property="og:type" content="website" />
+    <style>
+:root {
+  --bg: #f5efe4;
+  --bg-strong: #e7ddca;
+  --paper: rgba(255, 251, 246, 0.88);
+  --paper-strong: rgba(255, 248, 239, 0.97);
+  --ink: #17211b;
+  --muted: #58635e;
+  --line: rgba(23, 33, 27, 0.12);
+  --accent: #0f6f58;
+  --accent-soft: #dbefe7;
+  --opinion: #b55335;
+  --opinion-soft: #f7e0d8;
+  --mixed: #b2831a;
+  --mixed-soft: #f4e9c8;
+  --fact: #0f6f58;
+  --fact-soft: #daf0e7;
+  --shadow: 0 20px 60px rgba(45, 35, 15, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.75), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(15, 111, 88, 0.12), transparent 34%),
+    linear-gradient(160deg, var(--bg) 0%, #efe7d8 55%, var(--bg-strong) 100%);
+  color: var(--ink);
+  font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
+}
+
+button,
+input,
+textarea,
+a {
+  font: inherit;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+  box-shadow: none;
+}
+
+.page-shell {
+  width: min(1200px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 2rem 0 3rem;
+}
+
+.hero {
+  padding: 1rem 0 2rem;
+}
+
+.eyebrow,
+.section-label {
+  margin: 0 0 0.45rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+h1,
+h2 {
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+  line-height: 1.05;
+}
+
+h1 {
+  max-width: 12ch;
+  font-size: clamp(2.6rem, 6vw, 4.8rem);
+}
+
+h2 {
+  font-size: clamp(1.35rem, 2.2vw, 2rem);
+}
+
+.hero-copy,
+.hero-note,
+.panel-note,
+.status-message,
+.result-meta,
+.metric-label,
+.advice-chip,
+.empty-state,
+.report-item-copy,
+.result-note,
+.search-hint,
+.summary-lead,
+.url-import-note {
+  color: var(--muted);
+}
+
+.hero-copy {
+  max-width: 62ch;
+  margin: 1rem 0 0;
+  font-size: 1.05rem;
+  line-height: 1.65;
+}
+
+.hero-note {
+  max-width: 70ch;
+  margin: 0.85rem 0 0;
+  line-height: 1.6;
+  font-size: 0.96rem;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.panel {
+  grid-column: span 6;
+  padding: 1.35rem;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--paper);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow);
+}
+
+.panel-wide,
+.panel-report {
+  grid-column: 1 / -1;
+}
+
+.panel-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.panel-note,
+.status-message {
+  max-width: 30ch;
+  margin: 0;
+  line-height: 1.5;
+  font-size: 0.94rem;
+}
+
+.panel-editor {
+  grid-column: span 7;
+}
+
+.panel-summary {
+  grid-column: span 5;
+  align-self: start;
+}
+
+textarea {
+  width: 100%;
+  min-height: 340px;
+  resize: vertical;
+  padding: 1rem 1rem 1.2rem;
+  border: 1px solid rgba(23, 33, 27, 0.16);
+  border-radius: 20px;
+  background: var(--paper-strong);
+  color: var(--ink);
+  line-height: 1.7;
+}
+
+textarea:focus,
+input:focus {
+  outline: 2px solid rgba(15, 111, 88, 0.25);
+  border-color: rgba(15, 111, 88, 0.35);
+}
+
+.url-import {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.url-import input {
+  flex: 1 1 420px;
+  min-width: 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(23, 33, 27, 0.16);
+  border-radius: 999px;
+  background: var(--paper-strong);
+  color: var(--ink);
+}
+
+.url-import-note {
+  margin: 0 0 1rem;
+  line-height: 1.55;
+  font-size: 0.94rem;
+}
+
+.editor-actions,
+.search-actions,
+.export-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.editor-actions {
+  margin-top: 1rem;
+}
+
+.search-actions {
+  margin-top: 0.9rem;
+}
+
+.export-actions {
+  margin-top: 1rem;
+}
+
+.primary-button,
+.secondary-button,
+.ghost-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 0.8rem 1.15rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.primary-button {
+  background: var(--accent);
+  color: white;
+  box-shadow: 0 12px 25px rgba(15, 111, 88, 0.22);
+}
+
+.secondary-button {
+  background: rgba(255, 255, 255, 0.72);
+  border-color: rgba(23, 33, 27, 0.12);
+  color: var(--ink);
+}
+
+.ghost-button {
+  background: transparent;
+  border-color: rgba(23, 33, 27, 0.12);
+  color: var(--ink);
+}
+
+.primary-button:hover:not(:disabled),
+.secondary-button:hover:not(:disabled),
+.ghost-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.action-link {
+  text-decoration: none;
+}
+
+.is-disabled {
+  opacity: 0.46;
+  pointer-events: none;
+  box-shadow: none;
+}
+
+.search-hint {
+  margin: 0.85rem 0 0;
+  line-height: 1.5;
+  font-size: 0.94rem;
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.metric-card {
+  padding: 1rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(23, 33, 27, 0.08);
+}
+
+.metric-label {
+  margin: 0 0 0.35rem;
+  font-size: 0.92rem;
+}
+
+.metric-value {
+  margin: 0;
+  font-size: clamp(1.8rem, 4vw, 2.55rem);
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.summary-lead {
+  margin-top: 1rem;
+  padding: 0.95rem 1rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.74);
+  border: 1px solid rgba(23, 33, 27, 0.08);
+  line-height: 1.55;
+}
+
+.advice-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.advice-chip {
+  padding: 0.7rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(23, 33, 27, 0.08);
+  line-height: 1.35;
+}
+
+.report-output {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.report-card {
+  min-height: 100%;
+  padding: 1rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid rgba(23, 33, 27, 0.08);
+}
+
+.report-card h3 {
+  margin: 0 0 0.55rem;
+  font-size: 1rem;
+  font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
+}
+
+.report-card p,
+.report-card li {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.report-card ul {
+  margin: 0.7rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.priority-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.priority-card,
+.result-card,
+.sentence-pill {
+  padding: 1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(23, 33, 27, 0.08);
+  line-height: 1.55;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.priority-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.priority-card--fact {
+  background: linear-gradient(180deg, rgba(218, 240, 231, 0.95), rgba(255, 255, 255, 0.78));
+}
+
+.priority-card--mixed {
+  background: linear-gradient(180deg, rgba(244, 233, 200, 0.95), rgba(255, 255, 255, 0.78));
+}
+
+.priority-topline {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.priority-score {
+  min-width: fit-content;
+  padding: 0.45rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(23, 33, 27, 0.08);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.priority-text,
+.result-text {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--ink);
+}
+
+.result-list {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.result-meta,
+.priority-meta,
+.search-links,
+.evidence-list,
+.reason-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.priority-meta,
+.result-meta {
+  font-size: 0.9rem;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.28rem 0.58rem;
+  background: rgba(23, 33, 27, 0.08);
+  color: var(--ink);
+  font-size: 0.82rem;
+  line-height: 1.2;
+}
+
+.tag--fact {
+  background: rgba(15, 111, 88, 0.12);
+  color: var(--fact);
+}
+
+.tag--mixed {
+  background: rgba(178, 131, 26, 0.16);
+  color: #7d5f10;
+}
+
+.tag--opinion {
+  background: rgba(181, 83, 53, 0.14);
+  color: var(--opinion);
+}
+
+.reason-chip {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(23, 33, 27, 0.08);
+}
+
+.evidence-panel {
+  padding: 0.85rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px dashed rgba(23, 33, 27, 0.12);
+}
+
+.evidence-heading {
+  margin: 0 0 0.55rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.evidence-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.65rem 0.72rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(23, 33, 27, 0.08);
+}
+
+.evidence-item a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.evidence-item span {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.search-links a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.annotated-article {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.sentence-pill {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.sentence-pill--fact {
+  background: var(--fact-soft);
+}
+
+.sentence-pill--mixed {
+  background: var(--mixed-soft);
+}
+
+.sentence-pill--opinion {
+  background: var(--opinion-soft);
+}
+
+.result-card.fact-card {
+  background: linear-gradient(180deg, rgba(218, 240, 231, 0.92), rgba(255, 255, 255, 0.78));
+}
+
+.result-card.mixed-card {
+  background: linear-gradient(180deg, rgba(244, 233, 200, 0.92), rgba(255, 255, 255, 0.78));
+}
+
+.result-card.opinion-card {
+  background: linear-gradient(180deg, rgba(247, 224, 216, 0.92), rgba(255, 255, 255, 0.78));
+}
+
+.result-note {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.empty-state {
+  min-height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1rem;
+  border-radius: 18px;
+  border: 1px dashed rgba(23, 33, 27, 0.14);
+  background: rgba(255, 255, 255, 0.46);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (min-width: 960px) {
+  .panel-summary {
+    position: sticky;
+    top: 1rem;
+  }
+}
+
+@media (max-width: 959px) {
+  .panel,
+  .panel-editor,
+  .panel-summary,
+  .panel-wide,
+  .panel-report {
+    grid-column: 1 / -1;
+  }
+
+  .report-output,
+  .priority-list,
+  .annotated-article {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {
