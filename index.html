@@ -1,0 +1,1603 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Artikelchecker | Feiten en Mening Controleren</title>
+    <meta
+      name="description"
+      content="Analyseer artikelen op controleerbare feiten, subjectieve taal en snelle zoekrichtingen voor factchecking via Google, DuckDuckGo of Bing."
+    />
+    <meta name="robots" content="index,follow" />
+    <meta name="theme-color" content="#f5efe4" />
+    <meta
+      property="og:title"
+      content="Artikelchecker | Feiten en Mening Controleren"
+    />
+    <meta
+      property="og:description"
+      content="Plak een artikel en check hoe feitelijk, subjectief en online vindbaar de claims zijn."
+    />
+    <meta property="og:type" content="website" />
+    <style>
+:root {
+  --bg: #f5efe4;
+  --bg-strong: #e7ddca;
+  --paper: rgba(255, 251, 246, 0.88);
+  --paper-strong: rgba(255, 248, 239, 0.97);
+  --ink: #17211b;
+  --muted: #58635e;
+  --line: rgba(23, 33, 27, 0.12);
+  --accent: #0f6f58;
+  --accent-soft: #dbefe7;
+  --opinion: #b55335;
+  --opinion-soft: #f7e0d8;
+  --mixed: #b2831a;
+  --mixed-soft: #f4e9c8;
+  --fact: #0f6f58;
+  --fact-soft: #daf0e7;
+  --shadow: 0 20px 60px rgba(45, 35, 15, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.75), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(15, 111, 88, 0.12), transparent 34%),
+    linear-gradient(160deg, var(--bg) 0%, #efe7d8 55%, var(--bg-strong) 100%);
+  color: var(--ink);
+  font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
+}
+
+button,
+input,
+textarea,
+a {
+  font: inherit;
+}
+
+.page-shell {
+  width: min(1200px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 2rem 0 3rem;
+}
+
+.hero {
+  padding: 1rem 0 2rem;
+}
+
+.eyebrow,
+.section-label {
+  margin: 0 0 0.45rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+h1,
+h2 {
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+  line-height: 1.05;
+}
+
+h1 {
+  max-width: 12ch;
+  font-size: clamp(2.6rem, 6vw, 4.8rem);
+}
+
+h2 {
+  font-size: clamp(1.4rem, 2.2vw, 2rem);
+}
+
+.hero-copy,
+.hero-note,
+.panel-note,
+.status-message,
+.result-meta,
+.metric-label,
+.advice-chip,
+.empty-state {
+  color: var(--muted);
+}
+
+.hero-copy {
+  max-width: 62ch;
+  margin: 1rem 0 0;
+  font-size: 1.05rem;
+  line-height: 1.65;
+}
+
+.hero-note {
+  max-width: 70ch;
+  margin: 0.85rem 0 0;
+  line-height: 1.6;
+  font-size: 0.96rem;
+}
+
+.hero-note code {
+  padding: 0.1rem 0.35rem;
+  border-radius: 999px;
+  background: rgba(23, 33, 27, 0.08);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.panel {
+  grid-column: span 6;
+  padding: 1.3rem;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--paper);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow);
+}
+
+.panel-editor,
+.panel-wide,
+.panel-summary {
+  grid-column: span 12;
+}
+
+.panel-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.panel-note,
+.status-message {
+  max-width: 30ch;
+  margin: 0;
+  line-height: 1.5;
+  font-size: 0.94rem;
+}
+
+textarea {
+  width: 100%;
+  min-height: 320px;
+  resize: vertical;
+  padding: 1rem 1rem 1.2rem;
+  border: 1px solid rgba(23, 33, 27, 0.16);
+  border-radius: 20px;
+  background: var(--paper-strong);
+  color: var(--ink);
+  line-height: 1.7;
+}
+
+textarea:focus {
+  outline: 2px solid rgba(15, 111, 88, 0.25);
+  border-color: rgba(15, 111, 88, 0.35);
+}
+
+.url-import {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.url-import input {
+  flex: 1 1 420px;
+  min-width: 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(23, 33, 27, 0.16);
+  border-radius: 999px;
+  background: var(--paper-strong);
+  color: var(--ink);
+}
+
+.url-import input:focus {
+  outline: 2px solid rgba(15, 111, 88, 0.25);
+  border-color: rgba(15, 111, 88, 0.35);
+}
+
+.url-import-note {
+  margin: 0 0 1rem;
+  color: var(--muted);
+  line-height: 1.55;
+  font-size: 0.94rem;
+}
+
+.editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.search-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.9rem;
+}
+
+.primary-button,
+.secondary-button,
+.ghost-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 0.8rem 1.15rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.primary-button {
+  background: var(--accent);
+  color: white;
+  box-shadow: 0 12px 25px rgba(15, 111, 88, 0.22);
+}
+
+.secondary-button {
+  background: rgba(255, 255, 255, 0.72);
+  border-color: rgba(23, 33, 27, 0.12);
+}
+
+.ghost-button {
+  background: transparent;
+  border-color: rgba(23, 33, 27, 0.12);
+}
+
+.action-link {
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.is-disabled {
+  opacity: 0.46;
+  pointer-events: none;
+  box-shadow: none;
+}
+
+.search-hint {
+  margin: 0.85rem 0 0;
+  color: var(--muted);
+  line-height: 1.5;
+  font-size: 0.94rem;
+}
+
+.primary-button:hover,
+.secondary-button:hover,
+.ghost-button:hover {
+  transform: translateY(-1px);
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.metric-card {
+  padding: 1rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(23, 33, 27, 0.08);
+}
+
+.metric-label {
+  margin: 0 0 0.35rem;
+  font-size: 0.92rem;
+}
+
+.metric-value {
+  margin: 0;
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.advice-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.advice-chip {
+  padding: 0.7rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(23, 33, 27, 0.08);
+  line-height: 1.35;
+}
+
+.annotated-article {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.sentence-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0.85rem 0.95rem;
+  border-radius: 18px;
+  border: 1px solid rgba(23, 33, 27, 0.08);
+  line-height: 1.55;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.sentence-pill--fact {
+  background: var(--fact-soft);
+}
+
+.sentence-pill--opinion {
+  background: var(--opinion-soft);
+}
+
+.sentence-pill--mixed {
+  background: var(--mixed-soft);
+}
+
+.result-list {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.result-card {
+  padding: 1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(23, 33, 27, 0.1);
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.result-card.fact-card {
+  border-left: 4px solid var(--fact);
+}
+
+.result-card.opinion-card {
+  border-left: 4px solid var(--opinion);
+}
+
+.result-card.mixed-card {
+  border-left: 4px solid var(--mixed);
+}
+
+.result-card p {
+  margin: 0;
+}
+
+.result-card .result-text {
+  line-height: 1.6;
+  font-size: 1rem;
+}
+
+.result-meta {
+  margin-top: 0.6rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  font-size: 0.9rem;
+}
+
+.result-note {
+  margin-top: 0.65rem;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.38rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(23, 33, 27, 0.06);
+}
+
+.tag--fact {
+  background: var(--fact-soft);
+  color: var(--fact);
+}
+
+.tag--opinion {
+  background: var(--opinion-soft);
+  color: var(--opinion);
+}
+
+.tag--mixed {
+  background: var(--mixed-soft);
+  color: #7b5a0f;
+}
+
+.search-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 0.75rem;
+}
+
+.search-links a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.search-links a:hover {
+  text-decoration: underline;
+}
+
+.empty-state {
+  min-height: 72px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  border: 1px dashed rgba(23, 33, 27, 0.12);
+  border-radius: 18px;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 900px) {
+  .panel,
+  .panel-editor,
+  .panel-wide,
+  .panel-summary {
+    grid-column: span 12;
+  }
+
+  .panel-heading {
+    flex-direction: column;
+  }
+
+  .metric-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+    </style>
+</head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <p class="eyebrow">Artikelanalyse</p>
+        <h1>Check tekst op verifieerbare feiten en hoeveelheid mening</h1>
+        <p class="hero-copy">
+          Plak een artikel en krijg direct een inschatting van controleerbare
+          claims, subjectieve taal en snelle zoekrichtingen om uitspraken online
+          te verifiëren.
+        </p>
+        <p class="hero-note">
+          Vanuit deze tool kun je claims direct openen in Google, DuckDuckGo of
+          Bing. Voor echte vindbaarheid in zoekmachines moet de pagina wel online
+          staan, niet alleen als lokaal <code>file://</code>-bestand.
+        </p>
+      </header>
+
+      <main class="layout">
+        <section class="panel panel-editor">
+          <div class="panel-heading">
+            <div>
+              <p class="section-label">Invoer</p>
+              <h2>Artikeltekst</h2>
+            </div>
+            <p class="panel-note">
+              Deze tool geeft een redactionele inschatting. Een webmatch zegt
+              iets over vindbaarheid, niet automatisch over waarheid.
+            </p>
+          </div>
+
+          <div class="url-import">
+            <label class="sr-only" for="articleUrlInput">Artikel-URL</label>
+            <input
+              id="articleUrlInput"
+              type="url"
+              placeholder="Plak een artikel-link uit Google of een andere site..."
+            />
+            <button id="fetchUrlButton" class="secondary-button">
+              Analyseer link
+            </button>
+          </div>
+          <p class="url-import-note">
+            Gebruik dit als je een artikel eerst via Google hebt gevonden. De
+            analyse gebeurt hier in de tool, niet op de Google-pagina zelf.
+          </p>
+
+          <label class="sr-only" for="articleInput">Artikeltekst</label>
+          <textarea
+            id="articleInput"
+            rows="16"
+            placeholder="Plak hier je artikel of concepttekst..."
+          ></textarea>
+
+          <div class="editor-actions">
+            <button id="analyzeButton" class="primary-button">
+              Analyseer artikel
+            </button>
+            <button id="exampleButton" class="ghost-button">
+              Demo-tekst
+            </button>
+            <button id="clearButton" class="ghost-button">Wis tekst</button>
+          </div>
+
+          <div class="search-actions">
+            <a
+              id="googleSearchLink"
+              class="secondary-button action-link is-disabled"
+              href="#"
+              target="_blank"
+              rel="noreferrer"
+              aria-disabled="true"
+            >
+              Zoek claim in Google
+            </a>
+            <a
+              id="duckSearchLink"
+              class="secondary-button action-link is-disabled"
+              href="#"
+              target="_blank"
+              rel="noreferrer"
+              aria-disabled="true"
+            >
+              Zoek claim in DuckDuckGo
+            </a>
+            <a
+              id="bingSearchLink"
+              class="secondary-button action-link is-disabled"
+              href="#"
+              target="_blank"
+              rel="noreferrer"
+              aria-disabled="true"
+            >
+              Zoek claim in Bing
+            </a>
+          </div>
+
+          <p id="searchHint" class="search-hint">
+            Plak tekst om zoekmachines klaar te zetten.
+          </p>
+        </section>
+
+        <section class="panel panel-summary">
+          <div class="panel-heading">
+            <div>
+              <p class="section-label">Overzicht</p>
+              <h2>Snelle redactiecheck</h2>
+            </div>
+            <p id="statusMessage" class="status-message">
+              Plak eerst tekst om de analyse te starten.
+            </p>
+          </div>
+
+          <div id="metricGrid" class="metric-grid">
+            <article class="metric-card">
+              <p class="metric-label">Controleerbare claims</p>
+              <p class="metric-value">0%</p>
+            </article>
+            <article class="metric-card">
+              <p class="metric-label">Meningdichtheid</p>
+              <p class="metric-value">0%</p>
+            </article>
+            <article class="metric-card">
+              <p class="metric-label">Internet-vindbaarheid</p>
+              <p class="metric-value">0%</p>
+            </article>
+          </div>
+
+          <div id="adviceList" class="advice-list empty-state">
+            Tips verschijnen hier na de eerste analyse.
+          </div>
+        </section>
+
+        <section class="panel panel-wide">
+          <div class="panel-heading">
+            <div>
+              <p class="section-label">Gemarkeerd</p>
+              <h2>Artikel met labels</h2>
+            </div>
+          </div>
+          <div id="annotatedArticle" class="annotated-article empty-state">
+            Nog geen analyse beschikbaar.
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="section-label">Claims</p>
+              <h2>Waarschijnlijk controleerbaar</h2>
+            </div>
+          </div>
+          <div id="claimList" class="result-list empty-state">
+            Controleerbare zinnen verschijnen hier.
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <p class="section-label">Mening</p>
+              <h2>Subjectieve zinnen</h2>
+            </div>
+          </div>
+          <div id="opinionList" class="result-list empty-state">
+            Meningrijke zinnen verschijnen hier.
+          </div>
+        </section>
+
+        <section class="panel panel-wide">
+          <div class="panel-heading">
+            <div>
+              <p class="section-label">Twijfelgevallen</p>
+              <h2>Claims met duiding gemengd</h2>
+            </div>
+            <p class="panel-note">
+              Hier staan zinnen waarin feiten en interpretatie door elkaar lopen.
+            </p>
+          </div>
+          <div id="mixedList" class="result-list empty-state">
+            Gemengde zinnen verschijnen hier.
+          </div>
+        </section>
+      </main>
+    </div>
+    <script>
+const articleInput = document.querySelector("#articleInput");
+const articleUrlInput = document.querySelector("#articleUrlInput");
+const analyzeButton = document.querySelector("#analyzeButton");
+const fetchUrlButton = document.querySelector("#fetchUrlButton");
+const exampleButton = document.querySelector("#exampleButton");
+const clearButton = document.querySelector("#clearButton");
+const googleSearchLink = document.querySelector("#googleSearchLink");
+const duckSearchLink = document.querySelector("#duckSearchLink");
+const bingSearchLink = document.querySelector("#bingSearchLink");
+const searchHint = document.querySelector("#searchHint");
+
+const metricGrid = document.querySelector("#metricGrid");
+const adviceList = document.querySelector("#adviceList");
+const annotatedArticle = document.querySelector("#annotatedArticle");
+const claimList = document.querySelector("#claimList");
+const opinionList = document.querySelector("#opinionList");
+const mixedList = document.querySelector("#mixedList");
+const statusMessage = document.querySelector("#statusMessage");
+
+const opinionWords = new Set([
+  "absurd",
+  "afschuwelijk",
+  "belachelijk",
+  "belangrijk",
+  "bijzonder",
+  "briljant",
+  "chaotisch",
+  "dramatisch",
+  "duidelijk",
+  "echt",
+  "eerlijk",
+  "fantastisch",
+  "fijn",
+  "geweldig",
+  "goed",
+  "helaas",
+  "indrukwekkend",
+  "jammer",
+  "matig",
+  "mooi",
+  "onbegrijpelijk",
+  "opvallend",
+  "pijnlijk",
+  "prachtig",
+  "prima",
+  "redelijk",
+  "schandalig",
+  "slecht",
+  "sterk",
+  "teleurstellend",
+  "twijfelachtig",
+  "uitstekend",
+  "uniek",
+  "waardevol",
+  "vreemd",
+  "zwak",
+]);
+
+const opinionPhrases = [
+  "ik denk",
+  "ik vind",
+  "ik geloof",
+  "naar mijn mening",
+  "volgens mij",
+  "wat mij betreft",
+  "het voelt",
+  "je kunt gerust zeggen",
+  "naar ons idee",
+  "lijkt erop",
+  "dit bewijst volgens mij",
+];
+
+const hedgeWords = new Set([
+  "blijkbaar",
+  "kennelijk",
+  "lijkt",
+  "mogelijk",
+  "misschien",
+  "ogenschijnlijk",
+  "soms",
+  "tamelijk",
+  "vermoedelijk",
+  "waarschijnlijk",
+]);
+
+const factualWords = new Set([
+  "analyse",
+  "bron",
+  "cijfers",
+  "data",
+  "document",
+  "meldde",
+  "onderzoek",
+  "percentage",
+  "rapport",
+  "registratie",
+  "statistiek",
+  "verklaarde",
+  "volgens",
+]);
+
+const monthWords = new Set([
+  "januari",
+  "februari",
+  "maart",
+  "april",
+  "mei",
+  "juni",
+  "juli",
+  "augustus",
+  "september",
+  "oktober",
+  "november",
+  "december",
+]);
+
+const stopWords = new Set([
+  "aan",
+  "als",
+  "bij",
+  "dat",
+  "de",
+  "den",
+  "der",
+  "deze",
+  "die",
+  "dit",
+  "door",
+  "een",
+  "en",
+  "er",
+  "het",
+  "hun",
+  "in",
+  "is",
+  "met",
+  "naar",
+  "om",
+  "ons",
+  "onze",
+  "ook",
+  "op",
+  "te",
+  "tot",
+  "van",
+  "veel",
+  "voor",
+  "volgens",
+  "wat",
+  "werd",
+  "worden",
+  "wordt",
+  "zal",
+  "ze",
+  "zijn",
+  "zo",
+]);
+
+const exampleArticle = `De gemeente Zwolle maakte op 18 april 2026 bekend dat het aantal meldingen over verkeershinder in de binnenstad met 14 procent is gestegen ten opzichte van 2025. Volgens een intern rapport werden vooral de Melkmarkt en de Katerdijk vaker genoemd. Dat is een zorgelijke ontwikkeling, want bewoners zijn het gedoe duidelijk zat. Wethouder Eva Jansen zei tijdens een persmoment dat de stad in juni extra handhaving inzet. Het lijkt bovendien logisch dat de werkzaamheden veel slechter zijn gecommuniceerd dan de gemeente nu beweert. RTV Oost meldde eerder dat ondernemers in maart al om snellere omleidingen vroegen. Dat bewijst volgens mij dat het stadsbestuur te laat in actie kwam.`;
+
+const stateStorageKey = "artikelchecker-state-v2";
+let latestRunId = 0;
+
+analyzeButton.addEventListener("click", () => {
+  runAnalysis();
+});
+
+articleInput.addEventListener("input", () => {
+  updateSearchActions({ text: articleInput.value.trim() });
+  persistState();
+});
+
+articleUrlInput.addEventListener("input", () => {
+  persistState();
+});
+
+articleUrlInput.addEventListener("keydown", async (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    await importArticleFromUrl();
+  }
+});
+
+exampleButton.addEventListener("click", () => {
+  articleUrlInput.value = "";
+  articleInput.value = exampleArticle;
+  persistState();
+  runAnalysis();
+});
+
+clearButton.addEventListener("click", () => {
+  articleUrlInput.value = "";
+  articleInput.value = "";
+  latestRunId += 1;
+  persistState();
+  resetResults();
+});
+
+fetchUrlButton.addEventListener("click", async () => {
+  await importArticleFromUrl();
+});
+
+[googleSearchLink, duckSearchLink, bingSearchLink].forEach((link) => {
+  link.addEventListener("click", (event) => {
+    if (link.getAttribute("aria-disabled") === "true") {
+      event.preventDefault();
+    }
+  });
+});
+
+function resetResults() {
+  statusMessage.textContent = "Plak eerst tekst om de analyse te starten.";
+  metricGrid.innerHTML = getMetricCards([
+    ["Controleerbare claims", "0%"],
+    ["Meningdichtheid", "0%"],
+    ["Internet-vindbaarheid", "0%"],
+  ]);
+  adviceList.className = "advice-list empty-state";
+  adviceList.textContent = "Tips verschijnen hier na de eerste analyse.";
+  annotatedArticle.className = "annotated-article empty-state";
+  annotatedArticle.textContent = "Nog geen analyse beschikbaar.";
+  claimList.className = "result-list empty-state";
+  claimList.textContent = "Controleerbare zinnen verschijnen hier.";
+  opinionList.className = "result-list empty-state";
+  opinionList.textContent = "Meningrijke zinnen verschijnen hier.";
+  mixedList.className = "result-list empty-state";
+  mixedList.textContent = "Gemengde zinnen verschijnen hier.";
+  updateSearchActions({ text: "" });
+}
+
+async function runAnalysis() {
+  const text = articleInput.value.trim();
+
+  if (!text) {
+    resetResults();
+    return;
+  }
+
+  const runId = ++latestRunId;
+  statusMessage.textContent = "Tekst geanalyseerd. Snelle websignalen worden opgehaald...";
+
+  const analysis = analyzeText(text);
+  renderAnalysis(analysis);
+  updateSearchActions({ text, analysis });
+  persistState();
+
+  const itemsForLookup = analysis.items
+    .filter((item) => item.category !== "opinion" && item.searchQuery)
+    .slice(0, 5);
+
+  if (!itemsForLookup.length) {
+    statusMessage.textContent =
+      "Analyse klaar. Voeg meer concrete claims toe voor online-verifieerbare signalen.";
+    return;
+  }
+
+  await attachWikipediaHints(itemsForLookup);
+
+  if (runId !== latestRunId) {
+    return;
+  }
+
+  renderAnalysis(analysis);
+  updateSearchActions({ text, analysis });
+  persistState();
+  statusMessage.textContent =
+    "Analyse klaar. Gebruik de zoeklinks voor een echte factcheck en de webhint als snelle vindbaarheidsindicatie.";
+}
+
+async function importArticleFromUrl() {
+  const rawUrl = articleUrlInput.value.trim();
+
+  if (!rawUrl) {
+    statusMessage.textContent = "Plak eerst een artikel-link om hem hier te analyseren.";
+    return;
+  }
+
+  const normalizedUrl = normalizeArticleUrl(rawUrl);
+
+  if (!normalizedUrl) {
+    statusMessage.textContent = "Deze link lijkt ongeldig. Gebruik een volledige http- of https-link.";
+    return;
+  }
+
+  const runId = ++latestRunId;
+  fetchUrlButton.disabled = true;
+  statusMessage.textContent = "Artikeltekst wordt opgehaald vanaf de link...";
+
+  try {
+    const importedText = await fetchExtractedArticleText(normalizedUrl);
+
+    if (runId !== latestRunId) {
+      return;
+    }
+
+    articleUrlInput.value = normalizedUrl;
+    articleInput.value = importedText;
+    persistState();
+    await runAnalysis();
+  } catch (error) {
+    if (runId !== latestRunId) {
+      return;
+    }
+
+    statusMessage.textContent =
+      "De link kon niet automatisch worden ingelezen. Plak de artikeltekst handmatig of probeer een direct artikeladres.";
+  } finally {
+    fetchUrlButton.disabled = false;
+  }
+}
+
+function analyzeText(text) {
+  const sentences = splitIntoSentences(text);
+  const items = sentences.map((sentence, index) => analyzeSentence(sentence, index));
+  const totals = items.reduce(
+    (accumulator, item) => {
+      accumulator.totalWords += item.wordCount;
+      accumulator.totalOpinionHits += item.opinionScore;
+      accumulator.totalFactHits += item.factScore;
+      accumulator.findabilitySum += item.findabilityScore;
+      accumulator[item.category] += 1;
+      return accumulator;
+    },
+    {
+      fact: 0,
+      mixed: 0,
+      opinion: 0,
+      totalWords: 0,
+      totalOpinionHits: 0,
+      totalFactHits: 0,
+      findabilitySum: 0,
+    },
+  );
+
+  const sentenceCount = items.length || 1;
+  const claimRatio = Math.round(((totals.fact + totals.mixed * 0.5) / sentenceCount) * 100);
+  const opinionRatio = Math.round(((totals.opinion + totals.mixed * 0.5) / sentenceCount) * 100);
+  const findabilityRatio = Math.round(totals.findabilitySum / sentenceCount);
+
+  return {
+    items,
+    metrics: {
+      claimRatio,
+      opinionRatio,
+      findabilityRatio,
+      sentenceCount: items.length,
+      factCount: totals.fact,
+      mixedCount: totals.mixed,
+      opinionCount: totals.opinion,
+    },
+    advice: buildAdvice({
+      claimRatio,
+      opinionRatio,
+      findabilityRatio,
+      factCount: totals.fact,
+      mixedCount: totals.mixed,
+      opinionCount: totals.opinion,
+    }),
+  };
+}
+
+function splitIntoSentences(text) {
+  return (text.replace(/\s+/g, " ").match(/[^.!?]+[.!?]?/g) || [])
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+}
+
+function analyzeSentence(sentence, index) {
+  const normalized = sentence.toLowerCase();
+  const tokens = tokenize(sentence);
+  const opinionWordHits = countTokenHits(tokens, opinionWords);
+  const hedgeHits = countTokenHits(tokens, hedgeWords);
+  const factualHits = countTokenHits(tokens, factualWords);
+  const opinionPhraseHits = countPhraseHits(normalized, opinionPhrases);
+  const firstPersonHits = countTokenHits(tokens, new Set(["ik", "wij", "mijn", "onze"]));
+  const exclamationHits = sentence.includes("!") ? 1 : 0;
+  const questionHits = sentence.includes("?") ? 1 : 0;
+
+  const numberHits = countMatches(sentence, /\b\d+(?:[.,]\d+)?(?:\s?(?:%|procent|miljoen|miljard))?\b/gi);
+  const yearHits = countMatches(sentence, /\b(?:19|20)\d{2}\b/g);
+  const dateHits = countMatches(
+    sentence,
+    /\b\d{1,2}\s(?:januari|februari|maart|april|mei|juni|juli|augustus|september|oktober|november|december)\s(?:19|20)?\d{2}\b/gi,
+  );
+  const quoteHits = countMatches(sentence, /"[^"]+"|“[^”]+”/g);
+  const namedEntities = extractNamedEntities(sentence);
+
+  const factScore =
+    factualHits +
+    numberHits * 2 +
+    yearHits * 2 +
+    dateHits * 2 +
+    Math.min(namedEntities.length, 3) +
+    quoteHits;
+
+  const opinionScore =
+    opinionWordHits +
+    hedgeHits +
+    opinionPhraseHits * 2 +
+    firstPersonHits +
+    exclamationHits +
+    questionHits;
+
+  const category = classifySentence({ factScore, opinionScore, numberHits, namedEntities });
+  const searchQuery = buildSearchQuery(sentence);
+  const confidence = calculateConfidence(factScore, opinionScore);
+  const findabilityScore = calculateFindability({
+    factScore,
+    opinionScore,
+    numberHits,
+    yearHits,
+    dateHits,
+    entityCount: namedEntities.length,
+    queryLength: searchQuery.split(" ").filter(Boolean).length,
+  });
+
+  return {
+    id: `sentence-${index}`,
+    sentence,
+    wordCount: tokens.length,
+    factScore,
+    opinionScore,
+    category,
+    confidence,
+    searchQuery,
+    namedEntities,
+    findabilityScore,
+    wikipediaHint: null,
+  };
+}
+
+function tokenize(text) {
+  return text
+    .toLowerCase()
+    .split(/[^\p{L}\p{N}%'-]+/u)
+    .map((token) => token.trim())
+    .filter(Boolean);
+}
+
+function countTokenHits(tokens, lexicon) {
+  return tokens.reduce((total, token) => total + (lexicon.has(token) ? 1 : 0), 0);
+}
+
+function countPhraseHits(text, phrases) {
+  return phrases.reduce((total, phrase) => total + (text.includes(phrase) ? 1 : 0), 0);
+}
+
+function countMatches(text, expression) {
+  return text.match(expression)?.length || 0;
+}
+
+function extractNamedEntities(sentence) {
+  const matches = sentence.match(/\b(?:[A-Z][\p{L}-]+(?:\s+[A-Z][\p{L}-]+)*)\b/gu) || [];
+  return matches.filter((match) => {
+    const normalized = match.toLowerCase();
+    return match.length > 2 && !stopWords.has(normalized) && !monthWords.has(normalized);
+  });
+}
+
+function classifySentence({ factScore, opinionScore, numberHits, namedEntities }) {
+  if (factScore >= 4 && opinionScore <= 2) {
+    return "fact";
+  }
+
+  if (opinionScore >= 4 && factScore <= 2) {
+    return "opinion";
+  }
+
+  if (factScore >= 3 && opinionScore >= 2) {
+    return "mixed";
+  }
+
+  if (numberHits > 0 || namedEntities.length > 1) {
+    return factScore >= opinionScore ? "fact" : "mixed";
+  }
+
+  if (opinionScore > factScore) {
+    return "opinion";
+  }
+
+  return "mixed";
+}
+
+function calculateConfidence(factScore, opinionScore) {
+  const spread = Math.abs(factScore - opinionScore);
+  const base = 0.5 + spread * 0.07 + Math.max(factScore, opinionScore) * 0.03;
+  return Math.min(0.97, base);
+}
+
+function calculateFindability({
+  factScore,
+  opinionScore,
+  numberHits,
+  yearHits,
+  dateHits,
+  entityCount,
+  queryLength,
+}) {
+  const raw =
+    factScore * 10 +
+    numberHits * 12 +
+    yearHits * 10 +
+    dateHits * 10 +
+    Math.min(entityCount, 3) * 8 +
+    Math.min(queryLength, 6) * 4 -
+    opinionScore * 6;
+
+  return clamp(Math.round(raw), 5, 98);
+}
+
+function buildSearchQuery(sentence) {
+  const importantCaps = (sentence.match(/\b[A-Z][\p{L}-]+\b/gu) || []).filter((term) => {
+    const normalized = term.toLowerCase();
+    return !stopWords.has(normalized) && !monthWords.has(normalized);
+  });
+  const importantNumbers = sentence.match(/\b\d+(?:[.,]\d+)?(?:%| procent| miljoen| miljard)?\b/gi) || [];
+  const keywords = tokenize(sentence)
+    .filter((token) => !stopWords.has(token))
+    .filter((token) => !monthWords.has(token))
+    .filter((token) => !opinionWords.has(token))
+    .filter((token) => token.length > 2)
+    .slice(0, 6);
+
+  const terms = [...importantCaps, ...importantNumbers, ...keywords];
+  const uniqueTerms = [];
+  const seen = new Set();
+
+  for (const term of terms) {
+    const normalized = term.toLowerCase();
+
+    if (seen.has(normalized)) {
+      continue;
+    }
+
+    seen.add(normalized);
+    uniqueTerms.push(term);
+  }
+
+  return uniqueTerms.slice(0, 8).join(" ");
+}
+
+function getQuickSearchQuery(text, analysis) {
+  if (!text) {
+    return "";
+  }
+
+  const bestItem = analysis?.items
+    ?.filter((item) => item.category !== "opinion" && item.searchQuery)
+    ?.sort((left, right) => getSearchPriority(right) - getSearchPriority(left))[0];
+
+  if (bestItem?.searchQuery) {
+    return bestItem.searchQuery;
+  }
+
+  const previewText = splitIntoSentences(text).slice(0, 2).join(" ");
+  return buildSearchQuery(previewText || text);
+}
+
+function getSearchPriority(item) {
+  return (
+    item.findabilityScore +
+    item.factScore * 15 -
+    item.opinionScore * 8 +
+    (item.category === "fact" ? 20 : 0)
+  );
+}
+
+function updateSearchActions({ text, analysis = null }) {
+  const query = getQuickSearchQuery(text, analysis);
+
+  if (!query) {
+    setSearchLinkState(googleSearchLink, "", false);
+    setSearchLinkState(duckSearchLink, "", false);
+    setSearchLinkState(bingSearchLink, "", false);
+    searchHint.textContent = "Plak tekst om zoekmachines klaar te zetten.";
+    return;
+  }
+
+  setSearchLinkState(googleSearchLink, buildSearchUrl(query), true);
+  setSearchLinkState(duckSearchLink, buildDuckSearchUrl(query), true);
+  setSearchLinkState(bingSearchLink, buildBingSearchUrl(query), true);
+  searchHint.textContent = analysis
+    ? "Zoekmachines openen nu de sterkste controleerbare claim uit je analyse. De analyse zelf blijft op deze pagina."
+    : "Zoekmachines zijn klaar. Klik op analyseren als je een scherpere zoekterm wilt.";
+}
+
+function setSearchLinkState(link, href, enabled) {
+  link.href = enabled ? href : "#";
+  link.setAttribute("aria-disabled", enabled ? "false" : "true");
+  link.classList.toggle("is-disabled", !enabled);
+}
+
+function buildAdvice({ claimRatio, opinionRatio, findabilityRatio, factCount, mixedCount, opinionCount }) {
+  const advice = [];
+
+  if (factCount === 0) {
+    advice.push("Voeg cijfers, data of concrete namen toe als je meer controleerbare claims wilt.");
+  }
+
+  if (opinionRatio >= 45) {
+    advice.push("Er zit vrij veel interpretatie in de tekst. Overweeg neutrale formuleringen voor nieuws of analyse.");
+  }
+
+  if (mixedCount >= 2) {
+    advice.push("Splits feit en oordeel vaker in aparte zinnen. Dat maakt factchecking en redactie eenvoudiger.");
+  }
+
+  if (findabilityRatio <= 45) {
+    advice.push("Veel claims zijn nog vrij algemeen. Meer context zoals plaats, datum of bron maakt online checken makkelijker.");
+  }
+
+  if (claimRatio >= 60 && opinionCount <= 1) {
+    advice.push("De tekst oogt redelijk feitelijk. Voeg nu vooral expliciete bronnen of links toe.");
+  }
+
+  if (!advice.length) {
+    advice.push("De balans is bruikbaar. Controleer vooral de claims met cijfers en eigennamen als eerste.");
+  }
+
+  return advice;
+}
+
+function renderAnalysis(analysis) {
+  const { metrics, advice, items } = analysis;
+
+  metricGrid.innerHTML = getMetricCards([
+    ["Controleerbare claims", `${metrics.claimRatio}%`],
+    ["Meningdichtheid", `${metrics.opinionRatio}%`],
+    ["Internet-vindbaarheid", `${metrics.findabilityRatio}%`],
+  ]);
+
+  adviceList.className = "advice-list";
+  adviceList.innerHTML = advice
+    .map((item) => `<div class="advice-chip">${escapeHtml(item)}</div>`)
+    .join("");
+
+  annotatedArticle.className = "annotated-article";
+  annotatedArticle.innerHTML = items
+    .map(
+      (item) => `
+        <article class="sentence-pill sentence-pill--${item.category}">
+          <span class="tag tag--${item.category}">${getCategoryLabel(item.category)}</span>
+          ${escapeHtml(item.sentence)}
+        </article>
+      `,
+    )
+    .join("");
+
+  renderResultList(
+    claimList,
+    items.filter((item) => item.category === "fact"),
+    "Geen duidelijke controleerbare zinnen gevonden.",
+  );
+  renderResultList(
+    opinionList,
+    items.filter((item) => item.category === "opinion"),
+    "Geen sterk subjectieve zinnen gevonden.",
+  );
+  renderResultList(
+    mixedList,
+    items.filter((item) => item.category === "mixed"),
+    "Geen gemengde zinnen gevonden.",
+  );
+}
+
+function renderResultList(container, items, emptyLabel) {
+  if (!items.length) {
+    container.className = "result-list empty-state";
+    container.textContent = emptyLabel;
+    return;
+  }
+
+  container.className = "result-list";
+  container.innerHTML = items
+    .map((item) => {
+      const hintText = getHintText(item);
+      return `
+        <article class="result-card ${item.category}-card">
+          <p class="result-text">${escapeHtml(item.sentence)}</p>
+          <div class="result-meta">
+            <span class="tag tag--${item.category}">${getCategoryLabel(item.category)}</span>
+            <span class="tag">Zekerheid ${Math.round(item.confidence * 100)}%</span>
+            <span class="tag">Vindbaar ${item.findabilityScore}%</span>
+          </div>
+          <p class="result-note">${escapeHtml(hintText)}</p>
+          ${
+            item.searchQuery
+              ? `
+                <div class="search-links">
+                  <a href="${buildSearchUrl(item.searchQuery)}" target="_blank" rel="noreferrer">Zoek op web</a>
+                  <a href="${buildNewsSearchUrl(item.searchQuery)}" target="_blank" rel="noreferrer">Zoek in nieuws</a>
+                </div>
+              `
+              : ""
+          }
+        </article>
+      `;
+    })
+    .join("");
+}
+
+function getHintText(item) {
+  if (item.wikipediaHint?.status === "match") {
+    return `Snelle webhint: match op ${item.wikipediaHint.titles.join(", ")}. Controleer alsnog of de zin inhoudelijk klopt.`;
+  }
+
+  if (item.wikipediaHint?.status === "no-match") {
+    return "Snelle webhint: geen directe encyclopedische match gevonden. Gebruik de zoeklinks en controleer officiële bronnen.";
+  }
+
+  if (item.wikipediaHint?.status === "error") {
+    return "Snelle webhint kon niet worden opgehaald. De analyse blijft bruikbaar, maar controleer handmatig via de zoeklinks.";
+  }
+
+  if (item.category === "opinion") {
+    return "Deze zin bevat relatief veel subjectieve taal of interpretatie.";
+  }
+
+  if (item.category === "mixed") {
+    return "Hier lopen feitelijke claim en interpretatie door elkaar. Splitsen helpt.";
+  }
+
+  return "Deze zin bevat concrete signalen zoals namen, cijfers of datums en is daardoor waarschijnlijk online te controleren.";
+}
+
+function getCategoryLabel(category) {
+  if (category === "fact") {
+    return "Feitelijk";
+  }
+
+  if (category === "opinion") {
+    return "Mening";
+  }
+
+  return "Gemengd";
+}
+
+function getMetricCards(cards) {
+  return cards
+    .map(
+      ([label, value]) => `
+        <article class="metric-card">
+          <p class="metric-label">${escapeHtml(label)}</p>
+          <p class="metric-value">${escapeHtml(value)}</p>
+        </article>
+      `,
+    )
+    .join("");
+}
+
+async function attachWikipediaHints(items) {
+  await Promise.all(
+    items.map(async (item) => {
+      try {
+        const titles = await searchWikipedia(item.searchQuery);
+        item.wikipediaHint =
+          titles.length > 0 ? { status: "match", titles } : { status: "no-match" };
+      } catch (error) {
+        item.wikipediaHint = { status: "error" };
+      }
+    }),
+  );
+}
+
+async function searchWikipedia(query) {
+  if (!query) {
+    return [];
+  }
+
+  const languages = ["nl", "en"];
+
+  for (const language of languages) {
+    const url = `https://${language}.wikipedia.org/w/api.php?action=opensearch&origin=*&limit=3&search=${encodeURIComponent(query)}`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      continue;
+    }
+
+    const payload = await response.json();
+    const titles = Array.isArray(payload?.[1]) ? payload[1].filter(Boolean) : [];
+
+    if (titles.length) {
+      return titles.slice(0, 3);
+    }
+  }
+
+  return [];
+}
+
+async function fetchExtractedArticleText(sourceUrl) {
+  const readerCandidates = buildReaderCandidates(sourceUrl);
+
+  for (const readerUrl of readerCandidates) {
+    try {
+      const response = await fetch(readerUrl);
+
+      if (!response.ok) {
+        continue;
+      }
+
+      const rawText = await response.text();
+      const cleanedText = cleanImportedArticleText(rawText);
+
+      if (cleanedText.length >= 280) {
+        return cleanedText.slice(0, 18000);
+      }
+    } catch (error) {
+      continue;
+    }
+  }
+
+  throw new Error("import_failed");
+}
+
+function buildReaderCandidates(sourceUrl) {
+  const withoutProtocol = sourceUrl.replace(/^https?:\/\//i, "");
+  const candidates = [
+    `https://r.jina.ai/http://${withoutProtocol}`,
+    `https://r.jina.ai/http://${sourceUrl}`,
+  ];
+
+  if (sourceUrl.startsWith("https://")) {
+    candidates.push(`https://r.jina.ai/http://https://${withoutProtocol}`);
+  }
+
+  return [...new Set(candidates)];
+}
+
+function cleanImportedArticleText(rawText) {
+  const withoutHeaders = rawText
+    .replace(/^Title:\s.*$/gim, "")
+    .replace(/^URL Source:\s.*$/gim, "")
+    .replace(/^Published Time:\s.*$/gim, "")
+    .replace(/^Warning:\s.*$/gim, "")
+    .replace(/^Markdown Content:\s*$/gim, "");
+
+  return withoutHeaders
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/^\s*[-*]\s+/gm, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
+}
+
+function normalizeArticleUrl(value) {
+  const input = value.trim();
+  const withProtocol = /^https?:\/\//i.test(input) ? input : `https://${input}`;
+
+  try {
+    const url = new URL(withProtocol);
+
+    if (!["http:", "https:"].includes(url.protocol)) {
+      return null;
+    }
+
+    return url.toString();
+  } catch (error) {
+    return null;
+  }
+}
+
+function persistState() {
+  const state = {
+    text: articleInput.value,
+    articleUrl: articleUrlInput.value,
+  };
+
+  try {
+    localStorage.setItem(stateStorageKey, JSON.stringify(state));
+  } catch (error) {
+    return;
+  }
+}
+
+function restoreState() {
+  try {
+    const rawState = localStorage.getItem(stateStorageKey);
+
+    if (!rawState) {
+      return false;
+    }
+
+    const parsedState = JSON.parse(rawState);
+
+    if (typeof parsedState?.articleUrl === "string") {
+      articleUrlInput.value = parsedState.articleUrl;
+    }
+
+    if (typeof parsedState?.text === "string" && parsedState.text.trim()) {
+      articleInput.value = parsedState.text;
+      return true;
+    }
+  } catch (error) {
+    return false;
+  }
+
+  return false;
+}
+
+function buildSearchUrl(query) {
+  return `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+}
+
+function buildDuckSearchUrl(query) {
+  return `https://duckduckgo.com/?q=${encodeURIComponent(query)}`;
+}
+
+function buildBingSearchUrl(query) {
+  return `https://www.bing.com/search?q=${encodeURIComponent(query)}`;
+}
+
+function buildNewsSearchUrl(query) {
+  return `https://news.google.com/search?q=${encodeURIComponent(query)}`;
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function escapeHtml(value) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+resetResults();
+
+if (restoreState()) {
+  runAnalysis();
+}
+
+    </script>
+</body>
+</html>
