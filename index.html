@@ -1456,6 +1456,67 @@ const stopWords = new Set([
   "zo",
 ]);
 
+const blockedEvidenceHosts = [
+  "wikipedia.org",
+  "wikidata.org",
+  "duckduckgo.com",
+];
+
+const officialEvidenceHostKeywords = [
+  "overheid",
+  "rijksoverheid",
+  "gemeente",
+  "provincie",
+  "politie",
+  "rechtspraak",
+  "ministerie",
+  "cbs",
+  "rivm",
+  "tno",
+  "europa",
+  "eu",
+  "oecd",
+  "who",
+  "un.org",
+  "nasa",
+  "cdc",
+  "nih",
+];
+
+const researchEvidenceHostKeywords = [
+  "universiteit",
+  "university",
+  "research",
+  "nature.com",
+  "springer.com",
+  "sciencedirect.com",
+  "wiley.com",
+  "jamanetwork.com",
+  "thelancet.com",
+  "nejm.org",
+  "bmj.com",
+];
+
+const newsroomEvidenceHosts = [
+  "nos.nl",
+  "nu.nl",
+  "nrc.nl",
+  "trouw.nl",
+  "volkskrant.nl",
+  "ad.nl",
+  "parool.nl",
+  "fd.nl",
+  "telegraaf.nl",
+  "rtvoost.nl",
+  "reuters.com",
+  "apnews.com",
+  "bbc.com",
+  "bbc.co.uk",
+  "nytimes.com",
+  "wsj.com",
+  "theguardian.com",
+];
+
 const exampleArticle = `De gemeente Zwolle maakte op 18 april 2026 bekend dat het aantal meldingen over verkeershinder in de binnenstad met 14 procent is gestegen ten opzichte van 2025. Volgens een intern rapport werden vooral de Melkmarkt en de Katerdijk vaker genoemd. Dat is een zorgelijke ontwikkeling, want bewoners zijn het gedoe duidelijk zat. Wethouder Eva Jansen zei tijdens een persmoment dat de stad in juni extra handhaving inzet. Het lijkt bovendien logisch dat de werkzaamheden veel slechter zijn gecommuniceerd dan de gemeente nu beweert. RTV Oost meldde eerder dat ondernemers in maart al om snellere omleidingen vroegen. Dat bewijst volgens mij dat het stadsbestuur te laat in actie kwam.`;
 
 const stateStorageKey = "artikelchecker-state-v3";
@@ -2435,7 +2496,7 @@ function renderEvidencePanel(item) {
     return `
       <div class="evidence-panel">
         <p class="evidence-heading">Live websignalen</p>
-        <p class="result-note">Nog geen duidelijke openbare match gevonden. Gebruik zoekopdrachten en primaire bronnen.</p>
+        <p class="result-note">Nog geen betrouwbare openbare match gevonden. Encyclopedische en zwakke aggregators tellen niet mee; gebruik zoekopdrachten en primaire bronnen.</p>
       </div>
     `;
   }
@@ -2530,17 +2591,14 @@ async function attachLiveEvidence(items) {
     items.map(async (item) => {
       try {
         const evidenceQueries = buildEvidenceQueries(item);
-        const [wikipediaSources, wikidataSources, duckSources] = await Promise.all([
-          fetchEvidenceAcrossQueries(evidenceQueries, fetchWikipediaEvidence),
-          fetchEvidenceAcrossQueries(evidenceQueries, fetchWikidataEvidence),
-          fetchEvidenceAcrossQueries(evidenceQueries, fetchDuckDuckGoEvidence),
-        ]);
+        const trustedSources = await fetchEvidenceAcrossQueries(
+          evidenceQueries,
+          fetchDuckDuckGoEvidence,
+        );
 
-        const sources = dedupeEvidenceSources([
-          ...wikipediaSources,
-          ...wikidataSources,
-          ...duckSources,
-        ]).slice(0, 5);
+        const sources = dedupeEvidenceSources(trustedSources)
+          .sort((left, right) => (right.trust || 0) - (left.trust || 0))
+          .slice(0, 5);
 
         item.evidence = sources.length
           ? {
@@ -2587,54 +2645,6 @@ function buildEvidenceQueries(item) {
     .filter(onlyUnique);
 }
 
-async function fetchWikipediaEvidence(query) {
-  if (!query) {
-    return [];
-  }
-
-  const languages = ["nl", "en"];
-
-  for (const language of languages) {
-    try {
-      const url = `https://${language}.wikipedia.org/w/api.php?action=opensearch&origin=*&limit=3&search=${encodeURIComponent(query)}`;
-      const response = await fetchJsonWithTimeout(url);
-      const titles = Array.isArray(response?.[1]) ? response[1] : [];
-      const descriptions = Array.isArray(response?.[2]) ? response[2] : [];
-      const links = Array.isArray(response?.[3]) ? response[3] : [];
-
-      if (titles.length) {
-        return titles.slice(0, 3).map((title, index) => ({
-          source: "Wikipedia",
-          label: title,
-          detail: descriptions[index] || "Encyclopedische match gevonden",
-          url: links[index] || `https://${language}.wikipedia.org/wiki/${encodeURIComponent(title.replaceAll(" ", "_"))}`,
-        }));
-      }
-    } catch (error) {
-      continue;
-    }
-  }
-
-  return [];
-}
-
-async function fetchWikidataEvidence(query) {
-  if (!query) {
-    return [];
-  }
-
-  const url = `https://www.wikidata.org/w/api.php?action=wbsearchentities&format=json&language=nl&uselang=nl&limit=3&origin=*&search=${encodeURIComponent(query)}`;
-  const response = await fetchJsonWithTimeout(url);
-  const matches = Array.isArray(response?.search) ? response.search : [];
-
-  return matches.slice(0, 3).map((match) => ({
-    source: "Wikidata",
-    label: match.label || match.id || "Entity-match",
-    detail: match.description || "Structuurmatch in open kennisbank",
-    url: match.concepturi || `https://www.wikidata.org/wiki/${match.id}`,
-  }));
-}
-
 async function fetchDuckDuckGoEvidence(query) {
   if (!query) {
     return [];
@@ -2645,12 +2655,15 @@ async function fetchDuckDuckGoEvidence(query) {
   const sources = [];
 
   if (response?.AbstractURL && response?.Heading) {
-    sources.push({
-      source: "DuckDuckGo",
+    const source = createReliableEvidenceSource({
       label: response.Heading,
-      detail: response.AbstractText || "Instant answer gevonden",
+      detail: response.AbstractText || "Openbare match gevonden",
       url: response.AbstractURL,
     });
+
+    if (source) {
+      sources.push(source);
+    }
   }
 
   const relatedTopics = flattenRelatedTopics(response?.RelatedTopics || []).slice(0, 2);
@@ -2660,12 +2673,15 @@ async function fetchDuckDuckGoEvidence(query) {
       continue;
     }
 
-    sources.push({
-      source: "DuckDuckGo",
+    const source = createReliableEvidenceSource({
       label: topic.Text.split(" - ")[0] || "Gerelateerde match",
       detail: topic.Text,
       url: topic.FirstURL,
     });
+
+    if (source) {
+      sources.push(source);
+    }
   }
 
   return sources;
@@ -2704,18 +2720,122 @@ function dedupeEvidenceSources(sources) {
 }
 
 function computeEvidenceScore(sources) {
-  const weightBySource = {
-    Wikipedia: 28,
-    Wikidata: 22,
-    DuckDuckGo: 18,
-  };
+  const uniqueDomains = new Set(sources.map((source) => normalizeEvidenceHost(source.url))).size;
 
   return clamp(
-    sources.reduce((total, source) => total + (weightBySource[source.source] || 14), 0) +
-      (sources.length >= 2 ? 12 : 0),
+    sources.reduce((total, source) => total + (source.trust || 16), 0) +
+      (sources.length >= 2 ? 10 : 0) +
+      uniqueDomains * 4,
     0,
     100,
   );
+}
+
+function createReliableEvidenceSource({ label, detail, url }) {
+  const profile = getEvidenceSourceProfile(url);
+
+  if (!profile) {
+    return null;
+  }
+
+  return {
+    source: profile.source,
+    label,
+    detail: detail || profile.detail,
+    url,
+    trust: profile.trust,
+  };
+}
+
+function getEvidenceSourceProfile(url) {
+  const hostname = normalizeEvidenceHost(url);
+
+  if (!hostname || blockedEvidenceHosts.some((blocked) => hostname === blocked || hostname.endsWith(`.${blocked}`))) {
+    return null;
+  }
+
+  if (
+    hostname.endsWith(".gov") ||
+    hostname.endsWith(".gov.uk") ||
+    hostname.endsWith(".gouv.fr") ||
+    hostname.endsWith(".mil") ||
+    hostname.endsWith(".edu") ||
+    hostname.endsWith(".ac.uk") ||
+    officialEvidenceHostKeywords.some((keyword) => hostname.includes(keyword))
+  ) {
+    return {
+      source: prettifyEvidenceSource(hostname),
+      detail: "Officiële of institutionele bron",
+      trust: 34,
+    };
+  }
+
+  if (
+    researchEvidenceHostKeywords.some((keyword) => hostname.includes(keyword)) ||
+    hostname.endsWith(".edu") ||
+    hostname.includes(".ac.")
+  ) {
+    return {
+      source: prettifyEvidenceSource(hostname),
+      detail: "Onderzoeks- of kennisbron",
+      trust: 30,
+    };
+  }
+
+  if (
+    newsroomEvidenceHosts.some((trustedHost) => hostname === trustedHost || hostname.endsWith(`.${trustedHost}`))
+  ) {
+    return {
+      source: prettifyEvidenceSource(hostname),
+      detail: "Journalistieke bron",
+      trust: 26,
+    };
+  }
+
+  return null;
+}
+
+function normalizeEvidenceHost(url) {
+  try {
+    return new URL(url).hostname.toLowerCase().replace(/^www\./, "");
+  } catch (error) {
+    return "";
+  }
+}
+
+function prettifyEvidenceSource(hostname) {
+  const friendlyNames = {
+    "nos.nl": "NOS",
+    "nu.nl": "NU.nl",
+    "nrc.nl": "NRC",
+    "trouw.nl": "Trouw",
+    "volkskrant.nl": "de Volkskrant",
+    "ad.nl": "AD",
+    "parool.nl": "Het Parool",
+    "fd.nl": "FD",
+    "telegraaf.nl": "De Telegraaf",
+    "rtvoost.nl": "RTV Oost",
+    "reuters.com": "Reuters",
+    "apnews.com": "AP News",
+    "bbc.com": "BBC",
+    "bbc.co.uk": "BBC",
+    "nytimes.com": "The New York Times",
+    "wsj.com": "The Wall Street Journal",
+    "theguardian.com": "The Guardian",
+    "rijksoverheid.nl": "Rijksoverheid",
+    "cbs.nl": "CBS",
+    "rivm.nl": "RIVM",
+    "tno.nl": "TNO",
+    "rechtspraak.nl": "Rechtspraak",
+    "politie.nl": "Politie",
+  };
+
+  if (friendlyNames[hostname]) {
+    return friendlyNames[hostname];
+  }
+
+  const firstLabel = hostname.split(".")[0] || hostname;
+  return firstLabel.charAt(0).toUpperCase() + firstLabel.slice(1);
 }
 
 async function fetchExtractedArticleText(sourceUrl) {
