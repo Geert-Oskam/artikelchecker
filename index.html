@@ -771,6 +771,9 @@ input:focus {
     overflow: auto;
     overscroll-behavior: contain;
     scrollbar-width: thin;
+    z-index: 14;
+    isolation: isolate;
+    box-shadow: 0 28px 54px rgba(45, 35, 15, 0.18);
   }
 }
 
@@ -794,6 +797,7 @@ input:focus {
   .panel-summary {
     top: 0.85rem;
     max-height: calc(100vh - 1.7rem);
+    z-index: 14;
   }
 }
 
