@@ -763,20 +763,6 @@ input:focus {
   border: 0;
 }
 
-@media (min-width: 840px) {
-  .panel-summary {
-    position: sticky;
-    top: 1rem;
-    max-height: calc(100vh - 2rem);
-    overflow: auto;
-    overscroll-behavior: contain;
-    scrollbar-width: thin;
-    z-index: 14;
-    isolation: isolate;
-    box-shadow: 0 28px 54px rgba(45, 35, 15, 0.18);
-  }
-}
-
 @media (max-width: 959px) {
   .hero {
     padding-bottom: 1.8rem;
@@ -794,11 +780,6 @@ input:focus {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .panel-summary {
-    top: 0.85rem;
-    max-height: calc(100vh - 1.7rem);
-    z-index: 14;
-  }
 }
 
 @media (max-width: 839px) {
@@ -818,9 +799,6 @@ input:focus {
 
   .panel-summary {
     position: static;
-    max-height: none;
-    overflow: visible;
-    scroll-margin-top: 2rem;
   }
 }
 
